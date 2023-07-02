@@ -5,7 +5,7 @@ project(FEM)
 
 add_subdirectory(tests)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 set(EXPRTK_DIR /Users/andrei/CLionProjects/FEM/include/exprtk)
 
