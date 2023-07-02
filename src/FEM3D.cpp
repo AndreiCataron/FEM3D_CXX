@@ -1,4 +1,4 @@
-#include "FEM3D.hpp"
+#include "../include/FEM3D.hpp"
 
 #include <gmsh.h>
 
@@ -11,7 +11,9 @@ void FEM3D::setBoundaryConditions() {
     std::vector<std::pair<int, int> > boundary;
     gmsh::model::getBoundary(domain_entity, boundary, true, false, false);
 
-    std::vector<int> elementTypes;
-    std::vector<std::vector<std::size_t> > elementTags;
-    std::vector<std::vector<std::size_t> > nodeTags;
+    for(auto b : boundary){
+        std::vector<std::size_t> tags;
+        std::vector<double> coord, paramCoords;
+        gmsh::model::mesh::getNodes(tags, coord, paramCoords, b.first, b.second, true, false);
+    }
 }

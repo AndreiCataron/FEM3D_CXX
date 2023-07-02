@@ -9,7 +9,7 @@
 #include <cmath>
 #include <algorithm>
 
-#include "FEM3D.hpp"
+#include "../include/FEM3D.hpp"
 
 void print_entities(std::vector<std::pair<int, int> > entities) {
     for(auto e : entities){
