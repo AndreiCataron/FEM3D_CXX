@@ -1,7 +1,7 @@
 #include "../include/FEM3D.hpp"
 
 #include <gmsh.h>
-#include "exprtk.hpp"
+#include "../include/exprtk/exprtk.hpp"
 
 FEM3D::FEM3D(const FEM3D::Params &params) : params_(params) {}
 
@@ -52,4 +52,8 @@ void FEM3D::checkNodeSatisfiesBoundaryEquation(const std::size_t tag, double nx,
             dirichlet_bc[tag] = expression.value();
         }
     }
+}
+
+std::unordered_map<std::size_t, double> FEM3D::getDirichletBC() {
+    return dirichlet_bc;
 }

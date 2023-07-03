@@ -2,7 +2,6 @@
 #include <cassert>
 #include "../include/FEM3D.hpp"
 #include <gmsh.h>
-#include <unordered_map>
 
 int main(int argc, char **argv) {
     FEM3D::Params par = {
@@ -23,21 +22,5 @@ int main(int argc, char **argv) {
     gmsh::option::setNumber("General.Verbosity", 1);
     gmsh::model::mesh::generate(3);
 
-    fem.setBoundaryConditions();
-
-    std::unordered_map<std::size_t, double> map = fem.getDirichletBC();
-
-    std::cout << "start";
-    for (const auto& n : map){
-        auto tag = n.first;
-        std::vector<double> coord, paramcoord;
-        int dim, t;
-        gmsh::model::mesh::getNode(tag, coord, paramcoord, dim, t);
-        std::cout<<coord[0]<<" "<<coord[1]<<" "<<coord[2]<<" "<<n.second<<std::endl;
-    }
-
-
     gmsh::finalize();
-
-    return 0;
 }

@@ -31,4 +31,6 @@ public:
     // methods
     void setBoundaryConditions();
     void checkNodeSatisfiesBoundaryEquation(const std::size_t, double, double, double);
+
+    std::unordered_map<std::size_t, double> getDirichletBC();
 };
