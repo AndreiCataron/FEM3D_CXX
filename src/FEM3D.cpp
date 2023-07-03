@@ -41,11 +41,12 @@ void FEM3D::checkNodeSatisfiesBoundaryEquation(const std::size_t tag, double nx,
 
     parser_t parser;
 
-    if(params_.dirichlet_bc.empty() != 0) {
+    if(params_.dirichlet_bc.empty() != 1) {
         const std::string dirichlet_condition = params_.dirichlet_bc;
         parser.compile(dirichlet_condition,expression);
 
         x = nx; y = ny; z = nz;
+
         if(expression.value() == 1) {
             const std::string dirichlet_value = params_.g;
             parser.compile(dirichlet_value,expression);
@@ -56,4 +57,8 @@ void FEM3D::checkNodeSatisfiesBoundaryEquation(const std::size_t tag, double nx,
 
 std::unordered_map<std::size_t, double> FEM3D::getDirichletBC() {
     return dirichlet_bc;
+}
+
+FEM3D::Params FEM3D::getParams() {
+    return params_;
 }

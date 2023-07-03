@@ -13,13 +13,15 @@ find_library(FOO_LIB gmsh)
 
 find_path(FOO_PATH gmsh.h)
 
-add_executable(FEM src/main.cpp ${EXPRTK_DIR}/exprtk.hpp include/FEM3D.hpp src/FEM3D.cpp)
+add_executable(FEM src/main.cpp include/FEM3D.hpp src/FEM3D.cpp)
 
-target_link_libraries(FEM PRIVATE "${FOO_LIB}")
+target_link_libraries(FEM LINK_PUBLIC "${FOO_LIB}")
 
-target_include_directories(FEM PRIVATE "${FOO_PATH}")
+target_include_directories(FEM PUBLIC "${FOO_PATH}")
 
-target_include_directories(FEM PRIVATE ${EXPRTK_DIR})
+target_include_directories(FEM PUBLIC ${EXPRTK_DIR})
+
+target_include_directories(FEM PUBLIC include)
 
 include_directories(${EXPRTK_DIR})
 

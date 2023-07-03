@@ -1,9 +1,8 @@
 #include <iostream>
 #include <cassert>
 #include "../include/FEM3D.hpp"
-#include <gmsh.h>
 
-int main(int argc, char **argv) {
+int main() {
     FEM3D::Params par = {
             0,
             "x == 0",
@@ -12,15 +11,15 @@ int main(int argc, char **argv) {
 
     FEM3D fem(par);
 
-    gmsh::initialize(argc, argv);
+    fem.checkNodeSatisfiesBoundaryEquation(1, 0, 0.5, 0.3);
 
-    gmsh::model::occ::addBox(0, 0, 0, 1, 1, 1, 1000);
-    gmsh::model::occ::synchronize();
+    std::unordered_map<std::size_t, double> bc = fem.getDirichletBC();
 
-    gmsh::option::setNumber("Mesh.CharacteristicLengthMax", 0.5);
-    gmsh::option::setNumber("Mesh.MaxNumThreads3D", 10);
-    gmsh::option::setNumber("General.Verbosity", 1);
-    gmsh::model::mesh::generate(3);
+    for(auto i : bc){
+        std::cout << i.first << " " << i.second << std::endl;
+    }
 
-    gmsh::finalize();
+    assert(bc[1] == 1.1);
+
+    return 0;
 }

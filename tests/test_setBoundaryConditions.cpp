@@ -1,5 +1,4 @@
 #include <iostream>
-#include <cassert>
 #include "../include/FEM3D.hpp"
 #include <gmsh.h>
 #include <unordered_map>
