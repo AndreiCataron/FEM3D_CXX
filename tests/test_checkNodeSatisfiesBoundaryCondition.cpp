@@ -5,13 +5,12 @@
 int main() {
     FEM3DVector::ParamsVector par = {
             0,
-            "x == 0",
-            "x + y + 2 * z"
+            "x == 0"
     };
 
     FEM3DVector fem(par);
 
-    bool check = fem.checkNodeSatisfiesBoundaryEquation(1, 0, 0.5, 0.3);
+    int check = fem.checkNodeSatisfiesBoundaryEquation(1, 0, 0.5, 0.3);
 
     assert(check == 1);
 

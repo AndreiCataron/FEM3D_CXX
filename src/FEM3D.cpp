@@ -3,13 +3,13 @@
 #include <gmsh.h>
 #include "../include/exprtk/exprtk.hpp"
 
+typedef exprtk::symbol_table<double> symbol_table_t;
+typedef exprtk::expression<double>   expression_t;
+typedef exprtk::parser<double>       parser_t;
+
 FEM3D::FEM3D(const FEM3D::Params &params) : params_(params) {}
 
-bool FEM3D::checkNodeSatisfiesBoundaryEquation(const std::size_t tag, double nx, double ny, double nz) {
-    typedef exprtk::symbol_table<double> symbol_table_t;
-    typedef exprtk::expression<double>   expression_t;
-    typedef exprtk::parser<double>       parser_t;
-
+double FEM3D::parseExpression(std::string exp, double xx, double yy, double zz) {
     double x, y, z;
 
     symbol_table_t symbol_table;
@@ -22,28 +22,25 @@ bool FEM3D::checkNodeSatisfiesBoundaryEquation(const std::size_t tag, double nx,
     expression.register_symbol_table(symbol_table);
 
     parser_t parser;
+    const std::string e = exp;
 
-    if(params_.dirichlet_bc.empty() != 1) {
-        const std::string dirichlet_condition = params_.dirichlet_bc;
-        parser.compile(dirichlet_condition,expression);
+    parser.compile(e, expression);
 
-        x = nx; y = ny; z = nz;
+    x = xx; y = yy; z = zz;
 
-        if(expression.value() == 1) {
-            return true;
-//            const std::string dirichlet_value = params_.g;
-//            parser.compile(dirichlet_value,expression);
-//            dirichlet_bc[tag] = expression.value();
-        }
-        else {
-            return false;
-        }
-    }
-    return false;
+    return expression.value();
 }
 
-std::unordered_map<std::size_t, double> FEM3D::getDirichletBC() {
-    return dirichlet_bc;
+int FEM3D::checkNodeSatisfiesBoundaryEquation(const std::size_t tag, double nx, double ny, double nz) {
+
+    if(params_.dirichlet_bc.empty() != 1) {
+        int check_condition = int(parseExpression(params_.dirichlet_bc, nx, ny, nz));
+
+        if(check_condition == 1) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 FEM3D::Params FEM3D::getParams() {

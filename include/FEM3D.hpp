@@ -5,6 +5,7 @@
 
 #include <unordered_map>
 #include <string>
+#include "../include/exprtk/exprtk.hpp"
 
 class FEM3D{
 public:
@@ -17,21 +18,21 @@ private:
     // struct of parameters
     const Params params_;
 
-    // store for each node on the boundary [tag : dirichlet bc]
-    std::unordered_map<std::size_t, double> dirichlet_bc;
-    // store for each node on the boundary [tag : satisfies neumann boundary equation]
-    // temporary
-    std::unordered_map<std::size_t, bool> neumann_bc;
-
 public:
     // constructor
     FEM3D(const Params&);
 
     // methods
+    double parseExpression(std::string, double, double, double);
+
     virtual void setBoundaryConditions() = 0;
-    bool checkNodeSatisfiesBoundaryEquation(const std::size_t, double, double, double);
+
+    // check if a node is on a part of the boundary where boundary conditions are imposed
+    // return 0 if no bc are imposed, 1 for dirichlet, 2 for neumann
+    int checkNodeSatisfiesBoundaryEquation(const std::size_t, double, double, double);
+
+
 
     //getters
-    std::unordered_map<std::size_t, double> getDirichletBC();
     FEM3D::Params getParams();
 };
