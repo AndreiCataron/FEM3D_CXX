@@ -1,25 +1,24 @@
 #include <iostream>
 #include <cassert>
-#include "../include/FEM3D.hpp"
+#include "../include/FEM3Dvector.hpp"
 
 int main() {
-    FEM3D::Params par = {
+    FEM3DVector::ParamsVector par = {
             0,
             "x == 0",
             "x + y + 2 * z"
     };
 
-    FEM3D fem(par);
+    FEM3DVector fem(par);
 
-    fem.checkNodeSatisfiesBoundaryEquation(1, 0, 0.5, 0.3);
+    bool check = fem.checkNodeSatisfiesBoundaryEquation(1, 0, 0.5, 0.3);
 
-    std::unordered_map<std::size_t, double> bc = fem.getDirichletBC();
+    assert(check == 1);
 
-    for(auto i : bc){
-        std::cout << i.first << " " << i.second << std::endl;
-    }
+    check = fem.checkNodeSatisfiesBoundaryEquation(1, 0.2, 0.3, 0);
 
-    assert(bc[1] == 1.1);
+    assert(check == 0);
+
 
     return 0;
 }

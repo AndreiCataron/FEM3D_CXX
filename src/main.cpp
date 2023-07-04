@@ -29,9 +29,6 @@ void print_entities(std::vector<std::pair<int, int> > entities) {
 
 int main(int argc, char **argv) {
 
-    FEM3D::Params p = {2};
-    FEM3D fem(p);
-
     auto start = std::chrono::steady_clock::now();
 
     typedef exprtk::symbol_table<double> symbol_table_t;

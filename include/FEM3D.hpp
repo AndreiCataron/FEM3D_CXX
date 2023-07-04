@@ -11,7 +11,6 @@ public:
     struct Params{
         double h;
         std::string dirichlet_bc;
-        std::string g;
     };
 
 private:
@@ -29,9 +28,10 @@ public:
     FEM3D(const Params&);
 
     // methods
-    void setBoundaryConditions();
-    void checkNodeSatisfiesBoundaryEquation(const std::size_t, double, double, double);
+    virtual void setBoundaryConditions() = 0;
+    bool checkNodeSatisfiesBoundaryEquation(const std::size_t, double, double, double);
 
+    //getters
     std::unordered_map<std::size_t, double> getDirichletBC();
     FEM3D::Params getParams();
 };
