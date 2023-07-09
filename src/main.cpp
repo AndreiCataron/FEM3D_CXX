@@ -11,6 +11,9 @@
 
 #include "../include/FEM3D.hpp"
 
+
+#include <eigen3/Eigen/Dense>
+
 void print_entities(std::vector<std::pair<int, int> > entities) {
     for(auto e : entities){
         int s = e.second;
@@ -27,7 +30,16 @@ void print_entities(std::vector<std::pair<int, int> > entities) {
     }
 }
 
+using Eigen::MatrixXd;
+
 int main(int argc, char **argv) {
+
+    MatrixXd m(2,2);
+    m(0,0) = 3;
+    m(1,0) = 2.5;
+    m(0,1) = -1;
+    m(1,1) = m(1,0) + m(0,1);
+    std::cout << m << std::endl;
 
     auto start = std::chrono::steady_clock::now();
 
@@ -134,8 +146,8 @@ int main(int argc, char **argv) {
 
     gmsh::write("/Users/andrei/CLionProjects/FEM/test01.msh");
 
-//    std::set<std::string> args(argv, argv + argc);
-//    if(!args.count("-nopopup")) gmsh::fltk::run();
+    std::set<std::string> args(argv, argv + argc);
+    if(!args.count("-nopopup")) gmsh::fltk::run();
 
     gmsh::finalize();
 

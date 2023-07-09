@@ -26,12 +26,11 @@ public:
     double parseExpression(std::string, double, double, double);
 
     virtual void setBoundaryConditions() = 0;
+    virtual void computeStiffnessMatrix() = 0;
 
     // check if a node is on a part of the boundary where boundary conditions are imposed
     // return 0 if no bc are imposed, 1 for dirichlet, 2 for neumann
     int checkNodeSatisfiesBoundaryEquation(const std::size_t, double, double, double);
-
-
 
     //getters
     FEM3D::Params getParams();

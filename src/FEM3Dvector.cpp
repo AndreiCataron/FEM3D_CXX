@@ -1,8 +1,6 @@
 #include "../include/FEM3Dvector.hpp"
 
-#include <iostream>
 #include <gmsh.h>
-#include "../include/exprtk/exprtk.hpp"
 
 typedef exprtk::symbol_table<double> symbol_table_t;
 typedef exprtk::expression<double>   expression_t;

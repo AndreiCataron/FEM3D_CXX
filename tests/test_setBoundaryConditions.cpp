@@ -1,5 +1,5 @@
 #include <iostream>
-#include "../include/FEM3Dvector.hpp"
+#include "../include/LinearElasticity3D.hpp"
 #include <gmsh.h>
 #include <unordered_map>
 #include <cassert>
@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
             {"2 * x", "3 * y + 1", "x + z"}
     };
 
-    FEM3DVector fem(par);
+    LinearElasticity3D fem(par);
 
     gmsh::initialize(argc, argv);
 

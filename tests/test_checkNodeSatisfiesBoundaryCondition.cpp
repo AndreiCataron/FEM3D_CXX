@@ -1,6 +1,6 @@
 #include <iostream>
 #include <cassert>
-#include "../include/FEM3Dvector.hpp"
+#include "../include/LinearElasticity3D.hpp"
 
 int main() {
     FEM3DVector::ParamsVector par = {
@@ -8,7 +8,7 @@ int main() {
             "x == 0"
     };
 
-    FEM3DVector fem(par);
+    LinearElasticity3D fem(par);
 
     int check = fem.checkNodeSatisfiesBoundaryEquation(1, 0, 0.5, 0.3);
 
