@@ -43,6 +43,10 @@ int FEM3D::checkNodeSatisfiesBoundaryEquation(const std::size_t tag, double nx, 
     return 0;
 }
 
+void FEM3D::setupMesh() {
+    gmsh::model::mesh::setOrder(int(params_.element_order));
+}
+
 FEM3D::Params FEM3D::getParams() {
     return params_;
 }

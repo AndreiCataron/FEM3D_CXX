@@ -4,10 +4,10 @@ find_library(FOO_LIB gmsh)
 
 find_path(FOO_PATH gmsh.h)
 
-add_executable(sbc test_setBoundaryConditions.cpp ../include/FEM3D.hpp ../src/FEM3D.cpp ../include/FEM3Dvector.hpp ../src/FEM3Dvector.cpp ../include/LinearElasticity3D.hpp ../src/LinearElasticity3D.cpp)
-add_executable(cnsbc test_checkNodeSatisfiesBoundaryCondition.cpp ../include/FEM3D.hpp ../src/FEM3D.cpp ../include/FEM3Dvector.hpp ../src/FEM3Dvector.cpp ../include/LinearElasticity3D.hpp ../src/LinearElasticity3D.cpp)
-add_executable(cpi test_checkParamsInitialization.cpp ../include/FEM3D.hpp ../src/FEM3D.cpp ../include/FEM3Dvector.hpp ../src/FEM3Dvector.cpp ../include/LinearElasticity3D.hpp ../src/LinearElasticity3D.cpp)
-add_executable(lj learn_jabobians.cpp)
+add_executable(sbc test_setBoundaryConditions.cpp ../include/FEM3D.hpp ../src/FEM3D.cpp ../include/FEM3Dvector.hpp ../src/FEM3Dvector.cpp ../include/LinearElasticity3D.hpp ../src/LinearElasticity3D.cpp ../include/utils.hpp ../src/utils.cpp)
+add_executable(cnsbc test_checkNodeSatisfiesBoundaryCondition.cpp ../include/FEM3D.hpp ../src/FEM3D.cpp ../include/FEM3Dvector.hpp ../src/FEM3Dvector.cpp ../include/LinearElasticity3D.hpp ../src/LinearElasticity3D.cpp ../include/utils.hpp ../src/utils.cpp)
+add_executable(cpi test_checkParamsInitialization.cpp ../include/FEM3D.hpp ../src/FEM3D.cpp ../include/FEM3Dvector.hpp ../src/FEM3Dvector.cpp ../include/LinearElasticity3D.hpp ../src/LinearElasticity3D.cpp ../include/utils.hpp ../src/utils.cpp)
+add_executable(lj learn_jabobians.cpp ../include/utils.hpp ../src/utils.cpp)
 
 target_link_libraries(sbc LINK_PUBLIC "${FOO_LIB}")
 

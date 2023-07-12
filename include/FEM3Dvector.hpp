@@ -24,8 +24,6 @@ public:
     FEM3DVector(const ParamsVector&);
     void setBoundaryConditions() override;
 
-    double tetrahedronCuadrature();
-
     //getters
     std::unordered_map<std::size_t, std::vector<double> > getDirichletBC();
 };

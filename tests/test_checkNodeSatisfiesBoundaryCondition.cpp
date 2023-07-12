@@ -3,9 +3,14 @@
 #include "../include/LinearElasticity3D.hpp"
 
 int main() {
-    FEM3DVector::ParamsVector par = {
-            0,
-            "x == 0"
+    LinearElasticity3D::ParamsLE par = {
+            0, // h
+            "x == 0", // dirichlet BC
+            3, // quadrature precision
+            2, // order of lagrage polynomials
+            {"2 * x", "3 * y + 1", "x + z"}, // g
+            1, // lambda
+            2, // mu
     };
 
     LinearElasticity3D fem(par);

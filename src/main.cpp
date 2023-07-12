@@ -14,6 +14,8 @@
 
 #include <eigen3/Eigen/Dense>
 
+#include "../include/utils.hpp"
+
 void print_entities(std::vector<std::pair<int, int> > entities) {
     for(auto e : entities){
         int s = e.second;
@@ -33,6 +35,8 @@ void print_entities(std::vector<std::pair<int, int> > entities) {
 using Eigen::MatrixXd;
 
 int main(int argc, char **argv) {
+
+    std::cout << binom(2, 3);
 
     MatrixXd m(2,2);
     m(0,0) = 3;

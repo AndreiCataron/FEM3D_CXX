@@ -13,7 +13,7 @@ find_library(FOO_LIB gmsh)
 
 find_path(FOO_PATH gmsh.h)
 
-add_executable(FEM src/main.cpp include/FEM3D.hpp src/FEM3D.cpp include/FEM3Dvector.hpp src/FEM3Dvector.cpp include/LinearElasticity3D.hpp src/LinearElasticity3D.cpp)
+add_executable(FEM src/main.cpp include/FEM3D.hpp src/FEM3D.cpp include/FEM3Dvector.hpp src/FEM3Dvector.cpp include/LinearElasticity3D.hpp src/LinearElasticity3D.cpp include/utils.hpp src/utils.cpp)
 
 target_link_libraries(FEM LINK_PUBLIC "${FOO_LIB}")
 

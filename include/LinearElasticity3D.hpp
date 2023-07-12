@@ -1,13 +1,23 @@
 #ifndef FEM_LINEARELASTICITY3D_HPP
 #define FEM_LINEARELASTICITY3D_HPP
 
-#endif //FEM_LINEARELASTICITY3D_HPP
-
 #include "FEM3Dvector.hpp"
 
 class LinearElasticity3D : public FEM3DVector {
 public:
-    LinearElasticity3D(const FEM3DVector::ParamsVector&);
+    struct ParamsLE : FEM3DVector::ParamsVector {
+        // Lame constants
+        double lambda;
+        double mu;
+        // Poisson ratio
+        double nu = 0.3;
+    };
+private:
+    const ParamsLE paramsLE_;
+public:
+    LinearElasticity3D(const ParamsLE&);
 
     void computeStiffnessMatrix();
 };
+
+#endif //FEM_LINEARELASTICITY3D_HPP

@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
     gmsh::option::setNumber("General.Verbosity", 1);
     gmsh::model::mesh::generate(3);
 
-    gmsh::model::mesh::setOrder(4);
+    gmsh::model::mesh::setOrder(1);
 
 //    std::set<std::string> args(argv, argv + argc);
 //    if(!args.count("-nopopup")) gmsh::fltk::run();
@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
         std::cout << "\n";
         for(auto w : weights) std::cout << w << " ";
 
-        std::string functionSpaceType = "Lagrange2";
+        std::string functionSpaceType = "GradLagrange1";
         std::vector<double> basisFunctions;
         int numOrient, numComp = 3;
 
@@ -64,6 +64,7 @@ int main(int argc, char **argv) {
 
         gmsh::model::mesh::getBasisFunctions(elemType, localCoord, functionSpaceType, numComp, basisFunctions, numOrient);
 
+        std::cout << "Num comp: " << numComp;
         std::cout << "\n" << basisFunctions.size() << "\n";
         for(auto b : basisFunctions){
             std::cout << b << " ";
@@ -77,11 +78,38 @@ int main(int argc, char **argv) {
         gmsh::model::mesh::getJacobians(elemType, localCoord, jacobians, determinants, coord);
 
         std::cout << "\n";
+        for(auto i : jacobians) std::cout << i << ' ';
+        std::cout << '\n';
+        // tetrahedron volume = determinant / 6
         for(auto i : determinants){
             std::cout << i << " ";
         }
 
+        // Test function integral
+        // f(x, y, z) = x + y + z
+        // Get element coordinates
+        int elementType, dim, tag;
+        std::vector<std::size_t> nodeTags;
+        gmsh::model::mesh::getElement(622, elemType, nodeTags, dim, tag);
+        std::cout << "\n" << dim << ' ' << tag << '\n';
+        for(auto i : nodeTags) std::cout << i << " ";
+
+        for(auto i : nodeTags) {
+            std::vector<double> coordInt, localCoordInt;
+            int dim, tag;
+            gmsh::model::mesh::getNode(i, coordInt, localCoordInt, dim, tag);
+
+            std::cout << '\n';
+            for(auto i : coordInt) std::cout << i << ' ';
+//            std::cout << '\n';
+//            for(auto i :localCoordInt) std::cout << i << ' ';
+
+        }
     }
+
+//    std::set<std::string> args(argv, argv + argc);
+//    if(!args.count("-nopopup")) gmsh::fltk::run();
+
 
     gmsh::finalize();
 
