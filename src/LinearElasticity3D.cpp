@@ -20,12 +20,20 @@ void LinearElasticity3D::computeStiffnessMatrix() {
          0, 0, 0, 0, 0, mu;
 
     // get elements
-    std::vector<int> elementTypes;
-    std::vector<std::vector<std::size_t> > elementTags, nodeTags;
-    gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, 3);
+    std::vector<int> elemTypes;
+    std::vector<std::vector<std::size_t> > elemTags, nTags;
+    gmsh::model::mesh::getElements(elemTypes, elemTags, nTags, 3);
+
+    // get element type
+    int elementType = elemTypes[0];
+    // element tags
+    std::vector<std::size_t> elementTags = elemTags[0];
+    // node tags
+    std::vector<std::size_t> nodeTags = nTags[0];
+    // no of nodes per element
+    int noNodes = binom(int(paramsLE_.element_order) + 3, 3);
 
     // get integration points
-    int elementType = elementTypes[0];
     std::vector<double> localCoord, weights;
     std::string intRule = "Gauss" + std::to_string(paramsLE_.quadrature_precision);
 
@@ -40,7 +48,7 @@ void LinearElasticity3D::computeStiffnessMatrix() {
 
     gmsh::model::mesh::getBasisFunctions(elementType, localCoord, functionSpaceType, numComp, basisFunctions, numOrient);
 
-    int noBasisFunctions = binom(int(paramsLE_.element_order) + 3, 3);
+    int noBasisFunctions = noNodes;
     int bNoCols = 3 * noBasisFunctions;
 
     MatrixXd K(bNoCols, bNoCols);
@@ -65,5 +73,19 @@ void LinearElasticity3D::computeStiffnessMatrix() {
         MatrixXd Ktemp = B.transpose() * D * B;
         K = K + weights[i] * Ktemp;
     }
-    stiffness_matrix = K;
+
+    // get jacobians
+    std::vector<double> jacobians, determinants, coord;
+    std::vector<double> jacobianCoords = {0.25, 0.25, 0.25};
+
+    gmsh::model::mesh::preallocateJacobians(elementType, 1, false, true, false, jacobians, determinants, coord);
+    gmsh::model::mesh::getJacobians(elementType, jacobianCoords, jacobians, determinants, coord);
+
+    // loop through all elements
+    for(int i = 0; i < nodeTags.size(); i++) {
+        std::size_t elemTag = elementTags[i];
+        std::vector<std::size_t> elementNodeTags = std::vector<std::size_t>(nodeTags.begin() + i * noNodes, nodeTags.begin() + (i + 1) * noNodes);
+        double det = determinants[i];
+    }
+
 }

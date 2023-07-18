@@ -9,7 +9,7 @@ typedef exprtk::parser<double>       parser_t;
 
 FEM3D::FEM3D(const FEM3D::Params &params) : params_(params) {}
 
-double FEM3D::parseExpression(std::string exp, double xx, double yy, double zz) {
+double FEM3D::parseExpression(const std::string &exp, double xx, double yy, double zz) {
     double x, y, z;
 
     symbol_table_t symbol_table;
@@ -22,16 +22,15 @@ double FEM3D::parseExpression(std::string exp, double xx, double yy, double zz) 
     expression.register_symbol_table(symbol_table);
 
     parser_t parser;
-    const std::string e = exp;
 
-    parser.compile(e, expression);
+    parser.compile(exp, expression);
 
     x = xx; y = yy; z = zz;
 
     return expression.value();
 }
 
-int FEM3D::checkNodeSatisfiesBoundaryEquation(const std::size_t tag, double nx, double ny, double nz) {
+int FEM3D::checkNodeSatisfiesBoundaryEquation(double nx, double ny, double nz) {
 
     if(params_.dirichlet_bc.empty() != 1) {
         int check_condition = int(parseExpression(params_.dirichlet_bc, nx, ny, nz));
@@ -45,6 +44,22 @@ int FEM3D::checkNodeSatisfiesBoundaryEquation(const std::size_t tag, double nx, 
 
 void FEM3D::setupMesh() {
     gmsh::model::mesh::setOrder(int(params_.element_order));
+}
+
+void FEM3D::indexFreeNodes() {
+    // get nodes
+    std::vector<std::size_t> nodeTags;
+    std::vector<double> coord, parametricCoord;
+
+    gmsh::model::mesh::getNodes(nodeTags, coord, parametricCoord, -1, -1, false, false);
+
+    for(auto tag : nodeTags) {
+        // check node with tag is not constrained i.e. already in nodeIndexes
+        if(nodeIndexes.find(tag) != nodeIndexes.end()){
+            freeNodes.emplace_back(nodeIndexes.size());
+            nodeIndexes[tag] = nodeIndexes.size();
+        }
+    }
 }
 
 FEM3D::Params FEM3D::getParams() {

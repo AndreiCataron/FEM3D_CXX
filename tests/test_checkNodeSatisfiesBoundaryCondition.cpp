@@ -15,11 +15,11 @@ int main() {
 
     LinearElasticity3D fem(par);
 
-    int check = fem.checkNodeSatisfiesBoundaryEquation(1, 0, 0.5, 0.3);
+    int check = fem.checkNodeSatisfiesBoundaryEquation(0, 0.5, 0.3);
 
     assert(check == 1);
 
-    check = fem.checkNodeSatisfiesBoundaryEquation(1, 0.2, 0.3, 0);
+    check = fem.checkNodeSatisfiesBoundaryEquation(0.2, 0.3, 0);
 
     assert(check == 0);
 

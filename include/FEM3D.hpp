@@ -26,24 +26,32 @@ private:
     const Params params_;
 
 protected:
+    // dictionary of type tag : index
+    std::unordered_map<std::size_t, int> nodeIndexes;
+    // indexes of constrained nodes
+    std::vector<int> constrainedNodes;
+    //indexes of free nodes
+    std::vector<int> freeNodes;
     // stiffness matrix
     Eigen::MatrixXd stiffness_matrix;
 
 public:
     // constructor
-    FEM3D(const Params&);
+    explicit FEM3D(const Params&);
 
     // methods
-    double parseExpression(std::string, double, double, double);
+    double parseExpression(const std::string&, double, double, double);
 
     virtual void setBoundaryConditions() = 0;
     virtual void computeStiffnessMatrix() = 0;
 
     void setupMesh();
+    virtual void indexConstrainedNodes() = 0;
+    void indexFreeNodes();
 
     // check if a node is on a part of the boundary where boundary conditions are imposed
     // return 0 if no bc are imposed, 1 for dirichlet, 2 for neumann
-    int checkNodeSatisfiesBoundaryEquation(const std::size_t, double, double, double);
+    int checkNodeSatisfiesBoundaryEquation(double, double, double);
 
     //getters
     FEM3D::Params getParams();

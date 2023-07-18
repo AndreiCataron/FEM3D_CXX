@@ -10,9 +10,10 @@ int main(int argc, char **argv) {
 
     gmsh::option::setNumber("Mesh.CharacteristicLengthMax", 0.3);
     gmsh::option::setNumber("General.Verbosity", 1);
-    gmsh::model::mesh::generate(3);
 
+    gmsh::model::mesh::generate(3);
     gmsh::model::mesh::setOrder(1);
+    gmsh::option::setNumber("Mesh.NumSubEdges", 5);
 
 //    std::set<std::string> args(argv, argv + argc);
 //    if(!args.count("-nopopup")) gmsh::fltk::run();
@@ -75,11 +76,12 @@ int main(int argc, char **argv) {
 
         std::vector<double> jacobians, determinants, coord;
 
+        gmsh::model::mesh::preallocateJacobians(elemType, 1, false, true, false, jacobians, determinants, coord);
         gmsh::model::mesh::getJacobians(elemType, localCoord, jacobians, determinants, coord);
 
-        std::cout << "\n";
+        std::cout << "\n" << "sto";
         for(auto i : jacobians) std::cout << i << ' ';
-        std::cout << '\n';
+        std::cout << '\n' << "sto2" << '\n';
         // tetrahedron volume = determinant / 6
         for(auto i : determinants){
             std::cout << i << " ";
@@ -93,6 +95,7 @@ int main(int argc, char **argv) {
         gmsh::model::mesh::getElement(622, elemType, nodeTags, dim, tag);
         std::cout << "\n" << dim << ' ' << tag << '\n';
         for(auto i : nodeTags) std::cout << i << " ";
+        std::cout << "Number of nodes in element: " << nodeTags.size() << '\n';
 
         for(auto i : nodeTags) {
             std::vector<double> coordInt, localCoordInt;

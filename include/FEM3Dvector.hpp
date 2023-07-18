@@ -21,8 +21,10 @@ private:
     std::unordered_map<std::size_t, bool> neumann_bc;
 
 public:
-    FEM3DVector(const ParamsVector&);
+    explicit FEM3DVector(const ParamsVector&);
     void setBoundaryConditions() override;
+
+    void indexConstrainedNodes() override;
 
     //getters
     std::unordered_map<std::size_t, std::vector<double> > getDirichletBC();

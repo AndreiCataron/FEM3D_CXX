@@ -22,16 +22,25 @@ void FEM3DVector::setBoundaryConditions() {
 
         for(int i = 0; i < tags.size(); i++) {
             std::size_t tag = tags[i];
-            int bc = checkNodeSatisfiesBoundaryEquation(tag, coord[3 * i], coord[3 * i + 1], coord[3 * i + 2]);
+            int bc = checkNodeSatisfiesBoundaryEquation(coord[3 * i], coord[3 * i + 1], coord[3 * i + 2]);
 
             if(bc == 1){
                 std::vector<double> prescribed_condition;
+                prescribed_condition.reserve(3);
+
                 for(const auto &cond : params3d_.g){
                     prescribed_condition.emplace_back(parseExpression(cond, coord[3 * i], coord[3 * i + 1], coord[3 * i + 2]));
                 }
                 dirichlet_bc[tag] = prescribed_condition;
             }
         }
+    }
+}
+
+void FEM3DVector::indexConstrainedNodes() {
+    for(const auto& n : dirichlet_bc){
+        constrainedNodes.emplace_back(nodeIndexes.size());
+        nodeIndexes[n.first] = nodeIndexes.size();
     }
 }
 
