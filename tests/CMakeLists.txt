@@ -10,6 +10,7 @@ add_executable(cpi test_checkParamsInitialization.cpp ../include/FEM3D.hpp ../sr
 add_executable(lj learn_jabobians.cpp ../include/utils.hpp ../src/utils.cpp)
 add_executable(lnbag learn_isNodalBasisAutomaticallyGenerated.cpp)
 add_executable(rtst randomCXXTests.cpp)
+add_executable(ret randomEigenTests.cpp)
 
 target_link_libraries(sbc LINK_PUBLIC "${FOO_LIB}")
 
@@ -37,3 +38,4 @@ add_test(NAME testCheckParamsInitialization COMMAND cpi)
 add_test(NAME learnJacobians COMMAND lj)
 add_test(NAME learnNodalBasisAutomaticallyGenerated COMMAND lnbag)
 add_test(NAME randomTst COMMAND rtst)
+add_test(NAME randomEigenTst COMMAND ret)

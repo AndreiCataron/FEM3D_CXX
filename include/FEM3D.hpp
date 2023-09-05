@@ -30,7 +30,7 @@ protected:
     std::unordered_map<std::size_t, int> nodeIndexes;
     // indexes of constrained nodes
     std::vector<int> constrainedNodes;
-    //indexes of free nodes
+    // indexes of free nodes
     std::vector<int> freeNodes;
     // stiffness matrix
     Eigen::MatrixXd stiffness_matrix;
@@ -55,4 +55,7 @@ public:
 
     //getters
     FEM3D::Params getParams();
+    std::unordered_map<std::size_t, int> getNodeIndexes();
+    std::vector<int> getConstrainedNodes();
+    std::vector<int> getFreeNodes();
 };

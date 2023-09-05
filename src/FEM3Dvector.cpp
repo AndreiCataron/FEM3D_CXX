@@ -33,14 +33,20 @@ void FEM3DVector::setBoundaryConditions() {
                 }
                 dirichlet_bc[tag] = prescribed_condition;
             }
+
+            // add here other BC
+
         }
     }
+
+    indexConstrainedNodes();
+    indexFreeNodes();
 }
 
 void FEM3DVector::indexConstrainedNodes() {
     for(const auto& n : dirichlet_bc){
         constrainedNodes.emplace_back(nodeIndexes.size());
-        nodeIndexes[n.first] = nodeIndexes.size();
+        nodeIndexes[n.first] = int(nodeIndexes.size());
     }
 }
 

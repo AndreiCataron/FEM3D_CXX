@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
     gmsh::option::setNumber("General.Verbosity", 1);
 
     gmsh::model::mesh::generate(3);
-    gmsh::model::mesh::setOrder(1);
+    gmsh::model::mesh::setOrder(2);
     gmsh::option::setNumber("Mesh.NumSubEdges", 5);
 
 //    std::set<std::string> args(argv, argv + argc);
@@ -22,6 +22,8 @@ int main(int argc, char **argv) {
     std::vector<std::vector<std::size_t> > elementTags;
     std::vector<std::vector<std::size_t> > nodeTags;
     gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, 3);
+
+    std::cout << "\n Numar elemente: " << elementTags[0].size() << " ; numar noduri: " << nodeTags[0].size() << '\n';
 
     for(auto i : elementTypes){
         std::cout << i << " ";

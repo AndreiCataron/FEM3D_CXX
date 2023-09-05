@@ -55,13 +55,27 @@ void FEM3D::indexFreeNodes() {
 
     for(auto tag : nodeTags) {
         // check node with tag is not constrained i.e. already in nodeIndexes
-        if(nodeIndexes.find(tag) != nodeIndexes.end()){
+        if(nodeIndexes.find(tag) == nodeIndexes.end()) {
             freeNodes.emplace_back(nodeIndexes.size());
-            nodeIndexes[tag] = nodeIndexes.size();
+            nodeIndexes[tag] = int(nodeIndexes.size());
         }
     }
 }
 
+// getters
+
 FEM3D::Params FEM3D::getParams() {
     return params_;
+}
+
+std::unordered_map<std::size_t, int> FEM3D::getNodeIndexes() {
+    return nodeIndexes;
+}
+
+std::vector<int> FEM3D::getConstrainedNodes() {
+    return constrainedNodes;
+}
+
+std::vector<int> FEM3D::getFreeNodes() {
+    return freeNodes;
 }

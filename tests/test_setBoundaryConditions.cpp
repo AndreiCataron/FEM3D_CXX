@@ -43,6 +43,22 @@ int main(int argc, char **argv) {
         assert(abs(n.second[2] - coord[0] - coord[2]) < 1e-8);
     }
 
+    // check node indexes
+
+    std::unordered_map<std::size_t, int> ni = fem.getNodeIndexes();
+    for (const auto& n : ni){
+        std::cout << n.first << " " << n.second << '\n';
+    }
+
+    std::vector<int> con, free;
+    con = fem.getConstrainedNodes();
+    free = fem.getFreeNodes();
+
+    for (const auto& i : con) std::cout << i << " ";
+
+    std::cout << '\n';
+
+    for (const auto& i : free) std::cout << i << " ";
 
     gmsh::finalize();
 

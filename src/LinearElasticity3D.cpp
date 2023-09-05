@@ -2,6 +2,7 @@
 #include "../include/utils.hpp"
 #include <gmsh.h>
 #include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Sparse>
 
 using Eigen::MatrixXd;
 
@@ -30,8 +31,10 @@ void LinearElasticity3D::computeStiffnessMatrix() {
     std::vector<std::size_t> elementTags = elemTags[0];
     // node tags
     std::vector<std::size_t> nodeTags = nTags[0];
+    int noNodes = int(nodeTags.size());
     // no of nodes per element
-    int noNodes = binom(int(paramsLE_.element_order) + 3, 3);
+    // nodeTags.size() = elementTags.size() * noNodesPerElement
+    int noNodesPerElement = binom(int(paramsLE_.element_order) + 3, 3);
 
     // get integration points
     std::vector<double> localCoord, weights;
@@ -41,21 +44,37 @@ void LinearElasticity3D::computeStiffnessMatrix() {
 
     int noInterpolationPoints = int(localCoord.size()) / 3;
 
-    //get gradients at interpolation points
+    // get gradients at interpolation points
     std::string functionSpaceType = "GradLagrange" + std::to_string(paramsLE_.element_order);
     std::vector<double> basisFunctions;
     int numOrient, numComp;
 
     gmsh::model::mesh::getBasisFunctions(elementType, localCoord, functionSpaceType, numComp, basisFunctions, numOrient);
 
-    int noBasisFunctions = noNodes;
+    int noBasisFunctions = noNodesPerElement;
+    // number of columns of the strain matrix B introduced in Larson page 267
     int bNoCols = 3 * noBasisFunctions;
+
+    // get jacobians
+    std::vector<double> jacobians, determinants, coord;
+    std::vector<double> jacobianCoords = {0.25, 0.25, 0.25};
+
+    gmsh::model::mesh::preallocateJacobians(elementType, 1, false, true, false, jacobians, determinants, coord);
+    gmsh::model::mesh::getJacobians(elementType, jacobianCoords, jacobians, determinants, coord);
+
+    // initialize stiffness matrix as Eigen Sparse Matrix
+
+    std::vector<Eigen::Triplet<double> > tripletList;
+    //tripletList.reserve();
+    Eigen::SparseMatrix<double> mat(3 * noNodes, 3 * noNodes);
+
+    // assemble tripletList by looping through all elements and computing the element stiffness matrix
 
     MatrixXd K(bNoCols, bNoCols);
 
-    for(int i = 0; i < noInterpolationPoints; i++) {
+    for (int i = 0; i < noInterpolationPoints; i++) {
         MatrixXd B = MatrixXd::Zero(6, bNoCols);
-        for(int k = 0; k < noBasisFunctions; k++) {
+        for (int k = 0; k < noBasisFunctions; k++) {
             double a, b, c;
             a = basisFunctions[i * noInterpolationPoints + 3 * k];
             b = basisFunctions[i * noInterpolationPoints + 3 * k + 1];
@@ -74,18 +93,28 @@ void LinearElasticity3D::computeStiffnessMatrix() {
         K = K + weights[i] * Ktemp;
     }
 
-    // get jacobians
-    std::vector<double> jacobians, determinants, coord;
-    std::vector<double> jacobianCoords = {0.25, 0.25, 0.25};
-
-    gmsh::model::mesh::preallocateJacobians(elementType, 1, false, true, false, jacobians, determinants, coord);
-    gmsh::model::mesh::getJacobians(elementType, jacobianCoords, jacobians, determinants, coord);
-
     // loop through all elements
-    for(int i = 0; i < nodeTags.size(); i++) {
+    for (int i = 0; i < elementTags.size(); i++) {
         std::size_t elemTag = elementTags[i];
-        std::vector<std::size_t> elementNodeTags = std::vector<std::size_t>(nodeTags.begin() + i * noNodes, nodeTags.begin() + (i + 1) * noNodes);
+        std::vector<std::size_t> elementNodeTags = std::vector<std::size_t>(nodeTags.begin() + i * noNodesPerElement, nodeTags.begin() + (i + 1) * noNodesPerElement);
         double det = determinants[i];
-    }
 
+        MatrixXd elementStifness = det / 6 * K;
+        std::vector<int> elementNodeIndexes;
+        elementNodeIndexes.reserve(3 * noNodesPerElement);
+
+        for (const auto& tag : elementNodeTags) {
+            int index = nodeIndexes[tag];
+
+            elementNodeIndexes.emplace_back(3 * index);
+            elementNodeIndexes.emplace_back(3 * index + 1);
+            elementNodeIndexes.emplace_back(3 * index + 2);
+        }
+
+        for (int i = 0; i < bNoCols; i++) {
+            for (int j = 0; j < bNoCols; j++) {
+                tripletList.emplace_back(elementNodeIndexes[i], elementNodeIndexes[j], elementStifness(i, j));
+            }
+        }
+    }
 }

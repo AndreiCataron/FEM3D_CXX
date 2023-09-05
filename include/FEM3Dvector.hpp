@@ -22,8 +22,8 @@ private:
 
 public:
     explicit FEM3DVector(const ParamsVector&);
-    void setBoundaryConditions() override;
 
+    void setBoundaryConditions() override;
     void indexConstrainedNodes() override;
 
     //getters
