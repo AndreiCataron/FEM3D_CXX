@@ -44,6 +44,7 @@ public:
 
     virtual void setBoundaryConditions() = 0;
     virtual void computeStiffnessMatrix() = 0;
+    virtual void computeLoadVector() = 0;
 
     void setupMesh();
     virtual void indexConstrainedNodes() = 0;

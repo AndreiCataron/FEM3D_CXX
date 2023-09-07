@@ -18,6 +18,7 @@ public:
     LinearElasticity3D(const ParamsLE&);
 
     void computeStiffnessMatrix();
+    void computeLoadVector();
 };
 
 #endif //FEM_LINEARELASTICITY3D_HPP
