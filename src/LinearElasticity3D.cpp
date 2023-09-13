@@ -4,13 +4,11 @@
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
 
-using Eigen::MatrixXd;
-
 LinearElasticity3D::LinearElasticity3D(const LinearElasticity3D::ParamsLE &params) : paramsLE_(params), FEM3DVector(params){}
 
-void LinearElasticity3D::computeStiffnessMatrix() {
+void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
     // initialize D matrix
-    MatrixXd D(6, 6);
+    Eigen::MatrixXd D(6, 6);
     double lam = paramsLE_.lambda;
     double mu = paramsLE_.mu;
     D << lam + 2 * mu, lam, lam, 0, 0, 0,
@@ -44,10 +42,16 @@ void LinearElasticity3D::computeStiffnessMatrix() {
 
     int noInterpolationPoints = int(localCoord.size()) / 3;
 
-    // get gradients at interpolation points
-    std::string functionSpaceType = "GradLagrange" + std::to_string(paramsLE_.element_order);
-    std::vector<double> basisFunctionsGradients;
+    // get basis function values at interpolation points
+    std::string functionSpaceType = "Lagrange" + std::to_string(paramsLE_.element_order);
+    std::vector<double> basisFunctionsValues;
     int numOrient, numComp;
+
+    gmsh::model::mesh::getBasisFunctions(elementType, localCoord, functionSpaceType, numComp, basisFunctionsValues, numOrient);
+
+    // get gradients at interpolation points
+    functionSpaceType = "GradLagrange" + std::to_string(paramsLE_.element_order);
+    std::vector<double> basisFunctionsGradients;
 
     gmsh::model::mesh::getBasisFunctions(elementType, localCoord, functionSpaceType, numComp, basisFunctionsGradients, numOrient);
 
@@ -62,18 +66,36 @@ void LinearElasticity3D::computeStiffnessMatrix() {
     gmsh::model::mesh::preallocateJacobians(elementType, 1, false, true, false, jacobians, determinants, coord);
     gmsh::model::mesh::getJacobians(elementType, jacobianCoords, jacobians, determinants, coord);
 
+    // computation of the matrix M^k from Larson page 270
+
+    Eigen::MatrixXd Mk(3 * noNodesPerElement, 3 * noNodesPerElement);
+
+    for (int i = 0; i < noInterpolationPoints; i++) {
+        Eigen::MatrixXd Mktemp = Eigen::MatrixXd::Zero(3 * noNodesPerElement, 3);
+        for (int j = 0; j < noBasisFunctions; j++) {
+            Eigen::MatrixXd basisFunctionMatrix(3, 3);
+            basisFunctionMatrix(0, 0) = basisFunctionsValues[i * noInterpolationPoints + j];
+            basisFunctionMatrix(1, 1) = basisFunctionsValues[i * noInterpolationPoints + j];
+            basisFunctionMatrix(2, 2) = basisFunctionsValues[i * noInterpolationPoints + j];
+            Mktemp.block<3, 3>(0, 3 * j) = basisFunctionMatrix;
+        }
+        Mk = Mk + weights[i] * (Mktemp * Mktemp.transpose());
+    }
+
+    // initialize load vector
+    load_vector = Eigen::VectorXd::Zero(3 * noNodes);
+
     // initialize stiffness matrix as Eigen Sparse Matrix
 
     std::vector<Eigen::Triplet<double> > tripletList;
-    //tripletList.reserve();
-    Eigen::SparseMatrix<double> stiffnessMatrix (3 * noNodes, 3 * noNodes);
+    tripletList.reserve(elementTags.size() * bNoCols * bNoCols);
+    stiffness_matrix.resize(3 * noNodes, 3 * noNodes);
 
-    // assemble tripletList by looping through all elements and computing the element stiffness matrix
-
-    MatrixXd K(bNoCols, bNoCols);
+    // matrix used to
+    Eigen::MatrixXd K(bNoCols, bNoCols);
 
     for (int i = 0; i < noInterpolationPoints; i++) {
-        MatrixXd B = MatrixXd::Zero(6, bNoCols);
+        Eigen::MatrixXd B = Eigen::MatrixXd::Zero(6, bNoCols);
         for (int k = 0; k < noBasisFunctions; k++) {
             double a, b, c;
             a = basisFunctionsGradients[i * noInterpolationPoints + 3 * k];
@@ -89,17 +111,19 @@ void LinearElasticity3D::computeStiffnessMatrix() {
             B(5, 3 * k) = c;
             B(5, 3 * k + 2) = a;
         }
-        MatrixXd Ktemp = B.transpose() * D * B;
+        Eigen::MatrixXd Ktemp = B.transpose() * D * B;
         K = K + weights[i] * Ktemp;
     }
 
-    // loop through all elements
+    // assemble tripletList and load vector by looping through all elements and computing the element stiffness matrix
     for (int i = 0; i < elementTags.size(); i++) {
-        std::size_t elemTag = elementTags[i];
         std::vector<std::size_t> elementNodeTags = std::vector<std::size_t>(nodeTags.begin() + i * noNodesPerElement, nodeTags.begin() + (i + 1) * noNodesPerElement);
         double det = determinants[i];
 
-        MatrixXd elementStiffness = det / 6 * K;
+        Eigen::MatrixXd elementStiffness = det / 6 * K;
+        Eigen::MatrixXd elementMass = det / 6 * Mk;
+
+        // find stiffness and load indexes for the displacements in the element
         std::vector<int> elementNodeIndexes;
         elementNodeIndexes.reserve(3 * noNodesPerElement);
 
@@ -111,73 +135,33 @@ void LinearElasticity3D::computeStiffnessMatrix() {
             elementNodeIndexes.emplace_back(3 * index + 2);
         }
 
+        // add triplets for stiffness matrix
+        // repeated pairs of indexes are summed up when initializing the sparse stiffness matrix
         for (int k = 0; k < bNoCols; k++) {
             for (int j = 0; j < bNoCols; j++) {
                 tripletList.emplace_back(elementNodeIndexes[k], elementNodeIndexes[j], elementStiffness(k, j));
             }
         }
-    }
 
-    stiffnessMatrix.setFromTriplets(tripletList.begin(), tripletList.end());
+        // the vector f^k from Larson
+        std::vector<double> fk;
+        fk.reserve(3 * noNodesPerElement);
+        for (const auto& tag : elementNodeTags) {
+            std::tuple<double, double, double> nodeCoord = node_coordinates[tag];
 
-}
-
-void LinearElasticity3D::computeLoadVector() {
-    /////////////////////
-    // bucata asta e la fel ca la stifness
-    // ar trebui cumva rezolvata problema ca sa nu refolosesc cod
-    ////////////////////
-    // get elements
-    std::vector<int> elemTypes;
-    std::vector<std::vector<std::size_t> > elemTags, nTags;
-    gmsh::model::mesh::getElements(elemTypes, elemTags, nTags, 3);
-
-    // get element type
-    int elementType = elemTypes[0];
-    // element tags
-    std::vector<std::size_t> elementTags = elemTags[0];
-    // node tags
-    std::vector<std::size_t> nodeTags = nTags[0];
-    int noNodes = int(nodeTags.size());
-    // no of nodes per element
-    // nodeTags.size() = elementTags.size() * noNodesPerElement
-    int noNodesPerElement = binom(int(paramsLE_.element_order) + 3, 3);
-
-    // get integration points
-    std::vector<double> localCoord, weights;
-    std::string intRule = "Gauss" + std::to_string(paramsLE_.quadrature_precision);
-
-    gmsh::model::mesh::getIntegrationPoints(elementType, intRule, localCoord, weights);
-
-    int noInterpolationPoints = int(localCoord.size()) / 3;
-
-    ////////////////////
-    // final bucata dublata
-    ////////////////////
-
-    // get basis function values at interpolation points
-    std::string functionSpaceType = "Lagrange" + std::to_string(paramsLE_.element_order);
-    std::vector<double> basisFunctionsValues;
-    int numOrient, numComp;
-
-    gmsh::model::mesh::getBasisFunctions(elementType, localCoord, functionSpaceType, numComp, basisFunctionsValues, numOrient);
-
-    int noBasisFunctions = noNodesPerElement;
-
-    // computation of the matrix M^k from Larson page 270
-
-    MatrixXd Mk(3 * noNodesPerElement, 3 * noNodesPerElement);
-
-    for (int i = 0; i < noInterpolationPoints; i++) {
-        MatrixXd Mktemp = MatrixXd::Zero(3 * noNodesPerElement, 3);
-        for (int j = 0; j < noBasisFunctions; j++) {
-            MatrixXd basisFunctionMatrix(3, 3);
-            basisFunctionMatrix(0, 0) = basisFunctionsValues[i * noInterpolationPoints + j];
-            basisFunctionMatrix(1, 1) = basisFunctionsValues[i * noInterpolationPoints + j];
-            basisFunctionMatrix(2, 2) = basisFunctionsValues[i * noInterpolationPoints + j];
-            Mktemp.block<3, 3>(0, 3 * j) = basisFunctionMatrix;
+            for (const auto &component : paramsLE_.f) {
+                fk.emplace_back(parseExpression(component, std::get<0>(nodeCoord), std::get<1>(nodeCoord), std::get<2>(nodeCoord)));
+            }
         }
-        Mk = Mk + weights[i] * (Mktemp * Mktemp.transpose());
+
+        double *ptr = &fk[0];
+        Eigen::Map<Eigen::VectorXd> fkConverted(ptr, int(fk.size()));
+
+        Eigen::VectorXd localLoad = elementMass * fkConverted;
+
+        load_vector(elementNodeIndexes) += localLoad;
     }
+
+    stiffness_matrix.setFromTriplets(tripletList.begin(), tripletList.end());
 
 }

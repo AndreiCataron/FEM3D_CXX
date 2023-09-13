@@ -7,6 +7,7 @@
 #include <string>
 #include "../include/exprtk/exprtk.hpp"
 #include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Sparse>
 
 class FEM3D{
 public:
@@ -33,7 +34,9 @@ protected:
     // indexes of free nodes
     std::vector<int> freeNodes;
     // stiffness matrix
-    Eigen::MatrixXd stiffness_matrix;
+    Eigen::SparseMatrix<double> stiffness_matrix;
+    // load vector
+    Eigen::VectorXd load_vector;
 
 public:
     // constructor
@@ -43,8 +46,7 @@ public:
     double parseExpression(const std::string&, double, double, double);
 
     virtual void setBoundaryConditions() = 0;
-    virtual void computeStiffnessMatrix() = 0;
-    virtual void computeLoadVector() = 0;
+    virtual void computeStiffnessMatrixAndLoadVector() = 0;
 
     void setupMesh();
     virtual void indexConstrainedNodes() = 0;

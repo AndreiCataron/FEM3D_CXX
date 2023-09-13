@@ -15,10 +15,9 @@ public:
 private:
     const ParamsLE paramsLE_;
 public:
-    LinearElasticity3D(const ParamsLE&);
+    explicit LinearElasticity3D(const ParamsLE&);
 
-    void computeStiffnessMatrix();
-    void computeLoadVector();
+    void computeStiffnessMatrixAndLoadVector() override;
 };
 
 #endif //FEM_LINEARELASTICITY3D_HPP

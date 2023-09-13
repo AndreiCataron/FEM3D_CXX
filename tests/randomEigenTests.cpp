@@ -13,4 +13,20 @@ int main() {
     tripletList.emplace_back(Eigen::Triplet<double>(8, 9, 10));
     assert(tripletList.size() == 2);
 
+    Eigen::MatrixXd m(3, 3);
+    m << 1, 0, 0, 0, 1, 0, 0, 0, 1;
+    std::vector<double> vec = {3, 2, 1};
+    //Eigen::Matrix<double, 2, 1> v(vec.data());
+    double *ptr = &vec[0];
+    Eigen::Map<Eigen::VectorXd> v(ptr, 3);
+    Eigen::VectorXd v2(2);
+    v2 << 5, 5;
+
+    std::vector<int> indexes = {0, 2};
+    std::cout << v(indexes) << '\n';
+    v(indexes) += v2;
+    std::cout << v << '\n';
+
+    std::cout << m * v;
+
 }

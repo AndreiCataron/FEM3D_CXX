@@ -12,6 +12,7 @@ int main(int argc, char **argv) {
             3, // quadrature precision
             2, // order of lagrage polynomials
             {"2 * x", "3 * y + 1", "x + z"}, // g
+            {"0", "0", "0"}, // f
             1, // lambda
             2, // mu
     };
