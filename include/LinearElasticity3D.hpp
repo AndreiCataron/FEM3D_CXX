@@ -18,6 +18,7 @@ public:
     explicit LinearElasticity3D(const ParamsLE&);
 
     void computeStiffnessMatrixAndLoadVector() override;
+    void solveDisplacements() override;
 };
 
 #endif

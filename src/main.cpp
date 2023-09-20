@@ -148,12 +148,12 @@ int main(int argc, char **argv) {
 //
 //    }
 
-    gmsh::write("/Users/andrei/CLionProjects/FEM/test01.msh");
-
-    std::set<std::string> args(argv, argv + argc);
-    if(!args.count("-nopopup")) gmsh::fltk::run();
-
-    gmsh::finalize();
+//    gmsh::write("/Users/andrei/CLionProjects/FEM/test01.msh");
+//
+//    std::set<std::string> args(argv, argv + argc);
+//    if(!args.count("-nopopup")) gmsh::fltk::run();
+//
+//    gmsh::finalize();
 
     return 0;
 }

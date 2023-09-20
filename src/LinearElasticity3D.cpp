@@ -1,8 +1,11 @@
 #include "../include/LinearElasticity3D.hpp"
 #include "../include/utils.hpp"
+#include <iostream>
 #include <gmsh.h>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
+#include <eigen3/Eigen/IterativeLinearSolvers>
+//#include <omp.h>
 
 LinearElasticity3D::LinearElasticity3D(const LinearElasticity3D::ParamsLE &params) : paramsLE_(params), FEM3DVector(params){}
 
@@ -31,8 +34,8 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
     std::vector<std::size_t> nodeTags = nTags[0];
     // number of nodes in the mesh
     std::vector<std::size_t> tags;
-    std::vector<double> c, pc;
-    gmsh::model::mesh::getNodes(tags, c, pc, -1, -1, true, false);
+    std::vector<double> co, pc;
+    gmsh::model::mesh::getNodes(tags, co, pc, -1, -1, true, false);
     int noNodes = int(tags.size());
     // no of nodes per element
     // nodeTags.size() = elementTags.size() * noNodesPerElement
@@ -119,6 +122,7 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
     }
 
     // assemble tripletList and load vector by looping through all elements and computing the element stiffness matrix and load vector
+    #pragma omp parallel for default(none) shared(elementTags, nodeTags, noNodesPerElement, determinants, K, Mk, bNoCols, tripletList)
     for (int i = 0; i < elementTags.size(); i++) {
         // get tags of nodes in current element
         std::vector<std::size_t> elementNodeTags = std::vector<std::size_t>(nodeTags.begin() + i * noNodesPerElement, nodeTags.begin() + (i + 1) * noNodesPerElement);
@@ -153,7 +157,7 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
         for (const auto& tag : elementNodeTags) {
             std::tuple<double, double, double> nodeCoord = node_coordinates[tag];
 
-            for (const auto &component : paramsLE_.f) {
+            for (const auto& component : paramsLE_.f) {
                 fk.emplace_back(parseExpression(component, std::get<0>(nodeCoord), std::get<1>(nodeCoord), std::get<2>(nodeCoord)));
             }
         }
@@ -168,4 +172,25 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
 
     stiffness_matrix.setFromTriplets(tripletList.begin(), tripletList.end());
 
+}
+
+void LinearElasticity3D::solveDisplacements() {
+    displacements = Eigen::VectorXd(nodeIndexes.size());
+
+    Eigen::VectorXd constrainedValues(3 * constrainedNodes.size());
+
+    Eigen::ConjugateGradient<Eigen::SparseMatrix<double> > solver;
+
+    displacements = solver.compute(stiffness_matrix).solve(load_vector);
+
+    try {
+        if(solver.info() != Eigen::Success) {
+                // solving failed
+                throw 1;
+            }
+        }
+    catch (int err) {
+        std::cout << "solving the sparse system failed";
+        return;
+    }
 }

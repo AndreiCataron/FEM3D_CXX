@@ -11,8 +11,8 @@ int main(int argc, char **argv) {
             "0 == 0", // dirichlet BC
             3, // quadrature precision
             1, // order of lagrage polynomials
-            {"2 * x", "3 * y + 1", "x + z"}, // g
-            {"0", "0", "0"}, // f
+            {"x", "y", "z"}, // f
+            {"x", "y", "z"}, // g
             1, // lambda
             2, // mu
     };
@@ -27,7 +27,6 @@ int main(int argc, char **argv) {
     gmsh::option::setNumber("Mesh.CharacteristicLengthMax", 0.5);
     gmsh::option::setNumber("Mesh.MaxNumThreads3D", 10);
     gmsh::option::setNumber("General.Verbosity", 1);
-    gmsh::model::mesh::generate(3);
 
     fem.setupMesh();
     fem.setBoundaryConditions();
@@ -43,8 +42,39 @@ int main(int argc, char **argv) {
     std::vector<std::size_t> nodeTags;
     std::vector<double> coord, paramCoord;
     gmsh::model::mesh::getNodes(nodeTags, coord, paramCoord, -1, -1, true, false);
+//    for (auto i : nodeTags) std::cout << i << ' ';
+//    std::cout << '\n';
 
-    std::cout << "No nodes: " << nodeTags.size();
+    std::set<int> s;
+    unsigned size = nodeTags.size();
+    for( unsigned i = 0; i < size; ++i ) s.insert( nodeTags[i] );
+    nodeTags.assign( s.begin(), s.end() );
+
+    std::unordered_map<std::size_t, std::vector<double> > dir = fem.getDirichletBC();
+
+    std::cout << "No nodes: " << nodeTags.size() << ' ' << s.size() << '\n';
+    std::cout << "No of indexes: " << fem.getFreeNodes().size() + fem.getConstrainedNodes().size() << '\n';
+    std::cout << "No of constrained nodes: " << fem.getConstrainedNodes().size() << ' ' << dir.size() << '\n';
+
+    std::vector<int> free = fem.getFreeNodes();
+    std::vector<int> constrained = fem.getConstrainedNodes();
+    for (auto i : constrained) std::cout << i << ' ';
+    std::cout << '\n';
+    for (auto i : free) std::cout << i << ' ';
+    std::cout << '\n';
+
+    std::unordered_map<std::size_t, int> ni = fem.getNodeIndexes();
+    for (const auto& n : ni){
+        std::cout << n.first << " " << n.second << '\n';
+    }
+
+//    for (const auto& n : dir) {
+//        std::cout << n.first << ' ';
+//        for (auto i : n.second) {
+//            std::cout << i << ' ';
+//        }
+//        std::cout << '\n';
+//    }
 
     //Eigen::VectorXd prod = sm * lv;
 

@@ -35,6 +35,8 @@ protected:
     Eigen::SparseMatrix<double> stiffness_matrix;
     // load vector
     Eigen::VectorXd load_vector;
+    // solution in displacements
+    Eigen::VectorXd displacements;
 
 public:
     // constructor
@@ -43,17 +45,18 @@ public:
     // methods
     static double parseExpression(const std::string&, double, double, double);
 
-    virtual void setBoundaryConditions() = 0;
-    virtual void computeStiffnessMatrixAndLoadVector() = 0;
-
     void setupMesh();
     virtual void indexConstrainedNodes() = 0;
     void indexFreeNodes();
     virtual void getNodesCoordinates() = 0;
 
+    virtual void setBoundaryConditions() = 0;
     // check if a node is on a part of the boundary where boundary conditions are imposed
     // return 0 if no bc are imposed, 1 for dirichlet, 2 for neumann
     int checkNodeSatisfiesBoundaryEquation(double, double, double);
+    virtual void computeStiffnessMatrixAndLoadVector() = 0;
+    virtual void solveDisplacements() = 0;
+
 
     //getters
     FEM3D::Params getParams();
@@ -62,6 +65,7 @@ public:
     std::vector<int> getFreeNodes();
     Eigen::SparseMatrix<double> getStiffnessMatrix();
     Eigen::VectorXd getLoadVector();
+    Eigen::VectorXd getDisplacements();
 };
 
 #endif

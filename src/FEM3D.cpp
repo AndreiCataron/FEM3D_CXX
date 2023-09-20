@@ -34,10 +34,10 @@ double FEM3D::parseExpression(const std::string &exp, double xx, double yy, doub
 
 int FEM3D::checkNodeSatisfiesBoundaryEquation(double nx, double ny, double nz) {
 
-    if(params_.dirichlet_bc.empty() != 1) {
+    if (params_.dirichlet_bc.empty() != 1) {
         int check_condition = int(parseExpression(params_.dirichlet_bc, nx, ny, nz));
 
-        if(check_condition == 1) {
+        if (check_condition == 1) {
             return 1;
         }
     }
@@ -47,6 +47,8 @@ int FEM3D::checkNodeSatisfiesBoundaryEquation(double nx, double ny, double nz) {
 void FEM3D::setupMesh() {
     gmsh::model::mesh::setOrder(int(params_.element_order));
 
+    gmsh::model::mesh::generate(3);
+
     getNodesCoordinates();
 }
 
@@ -55,11 +57,11 @@ void FEM3D::indexFreeNodes() {
     std::vector<std::size_t> nodeTags;
     std::vector<double> coord, parametricCoord;
 
-    gmsh::model::mesh::getNodes(nodeTags, coord, parametricCoord, -1, -1, false, false);
+    gmsh::model::mesh::getNodes(nodeTags, coord, parametricCoord, -1, -1, true, false);
 
-    for(auto tag : nodeTags) {
+    for (auto tag : nodeTags) {
         // check node with tag is not constrained i.e. already in nodeIndexes
-        if(nodeIndexes.find(tag) == nodeIndexes.end()) {
+        if (nodeIndexes.find(tag) == nodeIndexes.end()) {
             freeNodes.emplace_back(nodeIndexes.size());
             nodeIndexes[tag] = int(nodeIndexes.size());
         }
@@ -90,5 +92,9 @@ Eigen::SparseMatrix<double> FEM3D::getStiffnessMatrix() {
 
 Eigen::VectorXd FEM3D::getLoadVector() {
     return load_vector;
+}
+
+Eigen::VectorXd FEM3D::getDisplacements() {
+    return displacements;
 }
 

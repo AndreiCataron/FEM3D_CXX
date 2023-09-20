@@ -30,6 +30,7 @@ int main() {
     obj.saysth();
 
     #pragma omp parallel for default(none)
+
     for (int i = 0; i < 10000000; i++) {
         int a = 0;
         a = a * a - a;
