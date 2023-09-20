@@ -20,4 +20,4 @@ public:
     void computeStiffnessMatrixAndLoadVector() override;
 };
 
-#endif //FEM_LINEARELASTICITY3D_HPP
+#endif

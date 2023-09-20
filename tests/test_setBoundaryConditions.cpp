@@ -3,7 +3,6 @@
 #include <gmsh.h>
 #include <unordered_map>
 #include <cassert>
-#include <typeinfo>
 
 int main(int argc, char **argv) {
     LinearElasticity3D::ParamsLE par = {

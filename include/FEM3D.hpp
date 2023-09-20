@@ -1,8 +1,6 @@
 #ifndef FEM_FEM3D_HPP
 #define FEM_FEM3D_HPP
 
-#endif //FEM_FEM3D_HPP
-
 #include <unordered_map>
 #include <string>
 #include "../include/exprtk/exprtk.hpp"
@@ -43,7 +41,7 @@ public:
     explicit FEM3D(const Params&);
 
     // methods
-    double parseExpression(const std::string&, double, double, double);
+    static double parseExpression(const std::string&, double, double, double);
 
     virtual void setBoundaryConditions() = 0;
     virtual void computeStiffnessMatrixAndLoadVector() = 0;
@@ -51,6 +49,7 @@ public:
     void setupMesh();
     virtual void indexConstrainedNodes() = 0;
     void indexFreeNodes();
+    virtual void getNodesCoordinates() = 0;
 
     // check if a node is on a part of the boundary where boundary conditions are imposed
     // return 0 if no bc are imposed, 1 for dirichlet, 2 for neumann
@@ -61,4 +60,8 @@ public:
     std::unordered_map<std::size_t, int> getNodeIndexes();
     std::vector<int> getConstrainedNodes();
     std::vector<int> getFreeNodes();
+    Eigen::SparseMatrix<double> getStiffnessMatrix();
+    Eigen::VectorXd getLoadVector();
 };
+
+#endif

@@ -1,8 +1,6 @@
 #ifndef FEM_FEM3DVECTOR_HPP
 #define FEM_FEM3DVECTOR_HPP
 
-#endif //FEM_FEM3DVECTOR_HPP
-
 #include "FEM3D.hpp"
 #include <string>
 
@@ -32,8 +30,10 @@ public:
     void setBoundaryConditions() override;
     void indexConstrainedNodes() override;
 
-    void getNodesCoordinates();
+    void getNodesCoordinates() override;
 
     //getters
     std::unordered_map<std::size_t, std::vector<double> > getDirichletBC();
 };
+
+#endif

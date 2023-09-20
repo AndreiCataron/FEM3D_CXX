@@ -1,6 +1,8 @@
 #include "../include/FEM3D.hpp"
 
 #include <gmsh.h>
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Sparse>
 #include "../include/exprtk/exprtk.hpp"
 
 typedef exprtk::symbol_table<double> symbol_table_t;
@@ -44,6 +46,8 @@ int FEM3D::checkNodeSatisfiesBoundaryEquation(double nx, double ny, double nz) {
 
 void FEM3D::setupMesh() {
     gmsh::model::mesh::setOrder(int(params_.element_order));
+
+    getNodesCoordinates();
 }
 
 void FEM3D::indexFreeNodes() {
@@ -79,3 +83,12 @@ std::vector<int> FEM3D::getConstrainedNodes() {
 std::vector<int> FEM3D::getFreeNodes() {
     return freeNodes;
 }
+
+Eigen::SparseMatrix<double> FEM3D::getStiffnessMatrix() {
+    return stiffness_matrix;
+}
+
+Eigen::VectorXd FEM3D::getLoadVector() {
+    return load_vector;
+}
+

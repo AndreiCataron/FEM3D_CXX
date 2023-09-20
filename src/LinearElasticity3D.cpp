@@ -29,7 +29,11 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
     std::vector<std::size_t> elementTags = elemTags[0];
     // node tags
     std::vector<std::size_t> nodeTags = nTags[0];
-    int noNodes = int(nodeTags.size());
+    // number of nodes in the mesh
+    std::vector<std::size_t> tags;
+    std::vector<double> c, pc;
+    gmsh::model::mesh::getNodes(tags, c, pc, -1, -1, true, false);
+    int noNodes = int(tags.size());
     // no of nodes per element
     // nodeTags.size() = elementTags.size() * noNodesPerElement
     int noNodesPerElement = binom(int(paramsLE_.element_order) + 3, 3);
@@ -77,7 +81,7 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
             basisFunctionMatrix(0, 0) = basisFunctionsValues[i * noInterpolationPoints + j];
             basisFunctionMatrix(1, 1) = basisFunctionsValues[i * noInterpolationPoints + j];
             basisFunctionMatrix(2, 2) = basisFunctionsValues[i * noInterpolationPoints + j];
-            Mktemp.block<3, 3>(0, 3 * j) = basisFunctionMatrix;
+            Mktemp.block<3, 3>(3 * j, 0) = basisFunctionMatrix;
         }
         Mk = Mk + weights[i] * (Mktemp * Mktemp.transpose());
     }
@@ -117,6 +121,7 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
 
     // assemble tripletList and load vector by looping through all elements and computing the element stiffness matrix
     for (int i = 0; i < elementTags.size(); i++) {
+        // get tags of nodes in current element
         std::vector<std::size_t> elementNodeTags = std::vector<std::size_t>(nodeTags.begin() + i * noNodesPerElement, nodeTags.begin() + (i + 1) * noNodesPerElement);
         double det = determinants[i];
 
