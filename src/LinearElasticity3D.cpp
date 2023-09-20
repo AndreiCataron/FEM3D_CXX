@@ -90,12 +90,11 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
     load_vector = Eigen::VectorXd::Zero(3 * noNodes);
 
     // initialize stiffness matrix as Eigen Sparse Matrix
-
     std::vector<Eigen::Triplet<double> > tripletList;
     tripletList.reserve(elementTags.size() * bNoCols * bNoCols);
     stiffness_matrix.resize(3 * noNodes, 3 * noNodes);
 
-    // matrix used to
+    // matrix used to compute local stiffness matrix for each element
     Eigen::MatrixXd K(bNoCols, bNoCols);
 
     for (int i = 0; i < noInterpolationPoints; i++) {
@@ -119,7 +118,7 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
         K = K + weights[i] * Ktemp;
     }
 
-    // assemble tripletList and load vector by looping through all elements and computing the element stiffness matrix
+    // assemble tripletList and load vector by looping through all elements and computing the element stiffness matrix and load vector
     for (int i = 0; i < elementTags.size(); i++) {
         // get tags of nodes in current element
         std::vector<std::size_t> elementNodeTags = std::vector<std::size_t>(nodeTags.begin() + i * noNodesPerElement, nodeTags.begin() + (i + 1) * noNodesPerElement);
@@ -140,7 +139,7 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
             elementNodeIndexes.emplace_back(3 * index + 2);
         }
 
-        // add triplets for stiffness matrix
+        // add triplets to tripletList
         // repeated pairs of indexes are summed up when initializing the sparse stiffness matrix
         for (int k = 0; k < bNoCols; k++) {
             for (int j = 0; j < bNoCols; j++) {
