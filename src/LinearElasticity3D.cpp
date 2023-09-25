@@ -5,7 +5,6 @@
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
 #include <eigen3/Eigen/IterativeLinearSolvers>
-//#include <omp.h>
 
 LinearElasticity3D::LinearElasticity3D(const LinearElasticity3D::ParamsLE &params) : paramsLE_(params), FEM3DVector(params){}
 
@@ -36,10 +35,11 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
     std::vector<std::size_t> tags;
     std::vector<double> co, pc;
     gmsh::model::mesh::getNodes(tags, co, pc, -1, -1, true, false);
+    utils::deleteDuplicatesFromVector(tags);
     int noNodes = int(tags.size());
     // no of nodes per element
     // nodeTags.size() = elementTags.size() * noNodesPerElement
-    int noNodesPerElement = binom(int(paramsLE_.element_order) + 3, 3);
+    int noNodesPerElement = utils::binom(int(paramsLE_.element_order) + 3, 3);
 
     // get integration points
     std::vector<double> localCoord, weights;
@@ -122,7 +122,6 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
     }
 
     // assemble tripletList and load vector by looping through all elements and computing the element stiffness matrix and load vector
-    #pragma omp parallel for default(none) shared(elementTags, nodeTags, noNodesPerElement, determinants, K, Mk, bNoCols, tripletList)
     for (int i = 0; i < elementTags.size(); i++) {
         // get tags of nodes in current element
         std::vector<std::size_t> elementNodeTags = std::vector<std::size_t>(nodeTags.begin() + i * noNodesPerElement, nodeTags.begin() + (i + 1) * noNodesPerElement);
@@ -177,20 +176,40 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
 void LinearElasticity3D::solveDisplacements() {
     displacements = Eigen::VectorXd(nodeIndexes.size());
 
+    // assemble vector of constrained values
     Eigen::VectorXd constrainedValues(3 * constrainedNodes.size());
 
-    Eigen::ConjugateGradient<Eigen::SparseMatrix<double> > solver;
+    std::unordered_map<int, std::size_t> reverseNodeIndexes = utils::inverseMap(nodeIndexes);
 
-    displacements = solver.compute(stiffness_matrix).solve(load_vector);
+    std::vector<double> tempDirBC;
 
-    try {
-        if(solver.info() != Eigen::Success) {
-                // solving failed
-                throw 1;
-            }
-        }
-    catch (int err) {
-        std::cout << "solving the sparse system failed";
-        return;
+    for (int i = 0; i < constrainedNodes.size(); i++) {
+        std::size_t idx = reverseNodeIndexes[constrainedNodes[i]];
+
+        tempDirBC = dirichlet_bc[idx];
+        constrainedValues(3 * i) = tempDirBC[0];
+        constrainedValues(3 * i + 1) = tempDirBC[1];
+        constrainedValues(3 * i + 2) = tempDirBC[2];
     }
+
+    load_vector = load_vector(freeNodes) -
+            stiffness_matrix.bottomRows(3 * freeNodes.size()).leftCols(3 * constrainedNodes.size()) * constrainedValues;
+//
+//    stiffness_matrix = stiffness_matrix.bottomRightCorner(3 * freeNodes.size(), 3 * freeNodes.size());
+
+
+//    Eigen::ConjugateGradient<Eigen::SparseMatrix<double> > solver;
+
+//    displacements = solver.compute(stiffness_matrix).solve(load_vector);
+
+//    try {
+//        if(solver.info() != Eigen::Success) {
+//                // solving failed
+//                throw 1;
+//            }
+//        }
+//    catch (int err) {
+//        std::cout << "solving the sparse system failed";
+//        return;
+//    }
 }

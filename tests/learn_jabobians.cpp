@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
     gmsh::option::setNumber("General.Verbosity", 1);
 
     gmsh::model::mesh::generate(3);
-    gmsh::model::mesh::setOrder(2);
+    gmsh::model::mesh::setOrder(3);
     gmsh::option::setNumber("Mesh.NumSubEdges", 5);
 
 //    std::set<std::string> args(argv, argv + argc);
@@ -25,15 +25,20 @@ int main(int argc, char **argv) {
 
     std::cout << "\n Numar elemente: " << elementTags[0].size() << " ; numar noduri: " << nodeTags[0].size() << '\n';
 
-    for(auto i : elementTypes){
-        std::cout << i << " ";
-    }
-    std::cout << std::endl;
-    for(auto j : elementTags){
-        for(auto k : j){
-            std::cout << k << " ";
-        }
-    }
+    std::sort(nodeTags[0].begin(), nodeTags[0].end());
+    nodeTags[0].erase(std::unique(nodeTags[0].begin(), nodeTags[0].end()), nodeTags[0].end());
+
+    std::cout << '\n' << nodeTags[0].size() << '\n';
+
+//    for(auto i : elementTypes){
+//        std::cout << i << " ";
+//    }
+//    std::cout << std::endl;
+//    for(auto j : elementTags){
+//        for(auto k : j){
+//            std::cout << k << " ";
+//        }
+//    }
     std::cout << "\n";
 
     for(auto elemType : elementTypes) {
@@ -81,13 +86,13 @@ int main(int argc, char **argv) {
         gmsh::model::mesh::preallocateJacobians(elemType, 1, false, true, false, jacobians, determinants, coord);
         gmsh::model::mesh::getJacobians(elemType, localCoord, jacobians, determinants, coord);
 
-        std::cout << "\n" << "sto";
-        for(auto i : jacobians) std::cout << i << ' ';
-        std::cout << '\n' << "sto2" << '\n';
-        // tetrahedron volume = determinant / 6
-        for(auto i : determinants){
-            std::cout << i << " ";
-        }
+//        std::cout << "\n" << "sto";
+//        for(auto i : jacobians) std::cout << i << ' ';
+//        std::cout << '\n' << "sto2" << '\n';
+//        // tetrahedron volume = determinant / 6
+//        for(auto i : determinants){
+//            std::cout << i << " ";
+//        }
 
         // Test function integral
         // f(x, y, z) = x + y + z

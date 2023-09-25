@@ -17,6 +17,7 @@ add_executable(stiff test_stiffnessAndLoad.cpp ../include/FEM3D.hpp ../src/FEM3D
 
 target_link_libraries(sbc LINK_PUBLIC "${FOO_LIB}")
 
+target_link_libraries(stiff PUBLIC OpenMP::OpenMP_CXX)
 target_link_libraries(rtst PUBLIC OpenMP::OpenMP_CXX)
 
 target_include_directories(sbc PUBLIC "${FOO_PATH}")

@@ -3,31 +3,26 @@
 #include <gmsh.h>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
+#include <utility>
 #include "../include/exprtk/exprtk.hpp"
 
 typedef exprtk::symbol_table<double> symbol_table_t;
 typedef exprtk::expression<double>   expression_t;
 typedef exprtk::parser<double>       parser_t;
 
-FEM3D::FEM3D(const FEM3D::Params &params) : params_(params) {}
-
-double FEM3D::parseExpression(const std::string &exp, double xx, double yy, double zz) {
-    double x, y, z;
-
-    symbol_table_t symbol_table;
-    symbol_table.add_variable("x",x);
-    symbol_table.add_variable("y", y);
-    symbol_table.add_variable("z", z);
+FEM3D::FEM3D(FEM3D::Params params) : params_(std::move(params)) {
+    symbol_table.add_variable("x", _x);
+    symbol_table.add_variable("y", _y);
+    symbol_table.add_variable("z", _z);
     symbol_table.add_constants();
 
-    expression_t expression;
     expression.register_symbol_table(symbol_table);
+}
 
-    parser_t parser;
-
+double FEM3D::parseExpression(const std::string &exp, double xx, double yy, double zz) {
     parser.compile(exp, expression);
 
-    x = xx; y = yy; z = zz;
+    _x = xx; _y = yy; _z = zz;
 
     return expression.value();
 }
@@ -45,9 +40,9 @@ int FEM3D::checkNodeSatisfiesBoundaryEquation(double nx, double ny, double nz) {
 }
 
 void FEM3D::setupMesh() {
-    gmsh::model::mesh::setOrder(int(params_.element_order));
-
     gmsh::model::mesh::generate(3);
+
+    gmsh::model::mesh::setOrder(int(params_.element_order));
 
     getNodesCoordinates();
 }

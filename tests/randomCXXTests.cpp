@@ -1,5 +1,5 @@
 #include <iostream>
-#include <omp.h>
+//#include <omp.h>
 
 class A {
 public:
@@ -29,12 +29,10 @@ int main() {
     C obj;
     obj.saysth();
 
-    #pragma omp parallel for default(none)
-
-    for (int i = 0; i < 10000000; i++) {
+    //#pragma omp parallel for
+    for (int i = 0; i < 5000000; i++) {
         int a = 0;
         a = a * a - a;
-        std::vector<int> v;
-        v.push_back(a);
     }
+
 }

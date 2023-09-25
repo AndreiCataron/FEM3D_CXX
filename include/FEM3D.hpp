@@ -7,6 +7,10 @@
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
 
+typedef exprtk::symbol_table<double> symbol_table_t;
+typedef exprtk::expression<double>   expression_t;
+typedef exprtk::parser<double>       parser_t;
+
 class FEM3D{
 public:
     struct Params{
@@ -23,6 +27,11 @@ public:
 private:
     // struct of parameters
     const Params params_;
+    // for parseExpression
+    double _x{}, _y{}, _z{};
+    symbol_table_t symbol_table;
+    expression_t expression;
+    parser_t parser;
 
 protected:
     // dictionary of type tag : index
@@ -40,10 +49,10 @@ protected:
 
 public:
     // constructor
-    explicit FEM3D(const Params&);
+    explicit FEM3D(Params );
 
     // methods
-    static double parseExpression(const std::string&, double, double, double);
+    double parseExpression(const std::string&, double, double, double);
 
     void setupMesh();
     virtual void indexConstrainedNodes() = 0;
