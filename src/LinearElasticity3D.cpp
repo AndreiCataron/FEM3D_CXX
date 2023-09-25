@@ -192,24 +192,31 @@ void LinearElasticity3D::solveDisplacements() {
         constrainedValues(3 * i + 2) = tempDirBC[2];
     }
 
-    load_vector = load_vector(freeNodes) -
+    std::vector<int> freeIndexes;
+    freeIndexes.reserve(3 * freeNodes.size());
+    for (auto idx : freeNodes) {
+        freeIndexes.emplace_back(3 * idx);
+        freeIndexes.emplace_back(3 * idx + 1);
+        freeIndexes.emplace_back(3 * idx + 2);
+    }
+
+    load_vector = load_vector(freeIndexes) -
             stiffness_matrix.bottomRows(3 * freeNodes.size()).leftCols(3 * constrainedNodes.size()) * constrainedValues;
-//
-//    stiffness_matrix = stiffness_matrix.bottomRightCorner(3 * freeNodes.size(), 3 * freeNodes.size());
 
+    stiffness_matrix = stiffness_matrix.bottomRightCorner(3 * freeNodes.size(), 3 * freeNodes.size());
 
-//    Eigen::ConjugateGradient<Eigen::SparseMatrix<double> > solver;
+    Eigen::ConjugateGradient<Eigen::SparseMatrix<double> > solver;
 
-//    displacements = solver.compute(stiffness_matrix).solve(load_vector);
+    displacements = solver.compute(stiffness_matrix).solve(load_vector);
 
-//    try {
-//        if(solver.info() != Eigen::Success) {
-//                // solving failed
-//                throw 1;
-//            }
-//        }
-//    catch (int err) {
-//        std::cout << "solving the sparse system failed";
-//        return;
-//    }
+    try {
+        if(solver.info() != Eigen::Success) {
+                // solving failed
+                throw 1;
+            }
+        }
+    catch (int err) {
+        std::cout << "solving the sparse system failed";
+        return;
+    }
 }
