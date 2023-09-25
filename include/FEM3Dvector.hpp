@@ -31,6 +31,8 @@ public:
 
     void getNodesCoordinates() override;
 
+    void outputData(std::string) override;
+
     //getters
     std::unordered_map<std::size_t, std::vector<double> > getDirichletBC();
 };

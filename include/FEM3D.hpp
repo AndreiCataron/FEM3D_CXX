@@ -66,6 +66,7 @@ public:
     virtual void computeStiffnessMatrixAndLoadVector() = 0;
     virtual void solveDisplacements() = 0;
 
+    virtual void outputData(std::string) = 0;
 
     //getters
     FEM3D::Params getParams();

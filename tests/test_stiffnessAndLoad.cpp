@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
     LinearElasticity3D::ParamsLE par = {
             0, // h
             "0 == 0", // dirichlet BC
-            3, // quadrature precision
+            2, // quadrature precision
             2, // order of lagrage polynomials
             {"x", "y", "z"}, // f
             {"x", "y", "z"}, // g
@@ -49,7 +49,20 @@ int main(int argc, char **argv) {
     std::cout << "Rows: " << sm.rows() << "; Cols: " << sm.cols() << "; Non-zero elements: " << sm.nonZeros() << '\n';
     std::cout << "Load Vector Size: " << lv.size() << '\n';
 
-    //check number of nodes in mesh
+    // check stiffness is spd
+
+//    std::cout << "Is sym: " << sm.isApprox(sm.transpose()) << '\n';
+//
+//    Eigen::LLT<Eigen::MatrixXd> lltOfA(sm); // compute the Cholesky decomposition of A
+//    if(lltOfA.info() == Eigen::NumericalIssue)
+//    {
+//        std::cout << "Gresit";
+//    }
+//    else {
+//        std::cout << "OK";
+//    }
+
+    // check number of nodes in mesh
 
     std::vector<std::size_t> nodeTags;
     std::vector<double> coord, paramCoord;
@@ -65,6 +78,8 @@ int main(int argc, char **argv) {
     std::cout << "No nodes: " << nodeTags.size() << ' ' << nodeTags.size() << '\n';
     std::cout << "No of indexes: " << fem.getFreeNodes().size() + fem.getConstrainedNodes().size() << '\n';
     std::cout << "No of constrained nodes: " << fem.getConstrainedNodes().size() << ' ' << dir.size() << '\n';
+
+    fem.outputData("/Users/andrei/CLionProjects/FEM/outputs/out.txt");
 
 //    for (auto p : fem.getNodeIndexes()) {
 //        std::cout << p.first << ' ' << p.second << '\n';

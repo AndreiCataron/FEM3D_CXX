@@ -1,6 +1,7 @@
 #include "../include/FEM3Dvector.hpp"
 
 #include <gmsh.h>
+#include <fstream>
 
 FEM3DVector::FEM3DVector(const FEM3DVector::ParamsVector &params) : params3d_(params), FEM3D(params){}
 
@@ -58,4 +59,22 @@ void FEM3DVector::getNodesCoordinates() {
 
 std::unordered_map<std::size_t, std::vector<double> > FEM3DVector::getDirichletBC() {
     return dirichlet_bc;
+}
+
+void FEM3DVector::outputData(std::string file) {
+    std::ofstream myFile;
+    myFile.open(file, std::ios::out | std::ios::trunc);
+
+    // output tag : index pairs
+    for (const auto& [tag, idx] : nodeIndexes) {
+        myFile << tag << ' ' << idx << ' ';
+    }
+    myFile << '\n';
+
+    // output node coordinates
+    for (const auto& [tag, coord] : node_coordinates) {
+        myFile << tag << ' ' << std::get<0>(coord) << ' ' << std::get<1>(coord) << ' ' << std::get<2>(coord) << ' ';
+    }
+
+    myFile.close();
 }

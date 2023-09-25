@@ -207,16 +207,16 @@ void LinearElasticity3D::solveDisplacements() {
 
     Eigen::ConjugateGradient<Eigen::SparseMatrix<double> > solver;
 
-    displacements = solver.compute(stiffness_matrix).solve(load_vector);
-
-    try {
-        if(solver.info() != Eigen::Success) {
-                // solving failed
-                throw 1;
-            }
-        }
-    catch (int err) {
-        std::cout << "solving the sparse system failed";
-        return;
-    }
+//    displacements = solver.compute(stiffness_matrix).solve(load_vector);
+//
+//    try {
+//        if(solver.info() != Eigen::Success) {
+//                // solving failed
+//                throw 1;
+//            }
+//        }
+//    catch (int err) {
+//        std::cout << "solving the sparse system failed";
+//        return;
+//    }
 }
