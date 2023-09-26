@@ -10,7 +10,9 @@ public:
         double lambda;
         double mu;
         // Poisson ratio
-        double nu = 0.3;
+        double nu;
+        // Young Modulus
+        double E;
     };
 private:
     const ParamsLE paramsLE_;

@@ -1,5 +1,6 @@
 #include <iostream>
 #include "../include/LinearElasticity3D.hpp"
+#include "../include/utils.hpp"
 #include <gmsh.h>
 #include </opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3/Eigen/Dense>
 #include </opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3/Eigen/Sparse>
@@ -14,9 +15,13 @@ int main(int argc, char **argv) {
             2, // order of lagrage polynomials
             {"x", "y", "z"}, // f
             {"x", "y", "z"}, // g
-            1, // lambda
-            2, // mu
+            -1, // lambda
+            -1, // mu
+            0.34, // nu
+            12.864 // E
     };
+
+    utils::checkParamsLE(par);
 
     LinearElasticity3D fem(par);
 
@@ -51,8 +56,8 @@ int main(int argc, char **argv) {
 
     // check stiffness is spd
 
-//    std::cout << "Is sym: " << sm.isApprox(sm.transpose()) << '\n';
-//
+    std::cout << "Is sym: " << sm.isApprox(sm.transpose()) << '\n';
+
 //    Eigen::LLT<Eigen::MatrixXd> lltOfA(sm); // compute the Cholesky decomposition of A
 //    if(lltOfA.info() == Eigen::NumericalIssue)
 //    {
@@ -61,6 +66,7 @@ int main(int argc, char **argv) {
 //    else {
 //        std::cout << "OK";
 //    }
+//    std::cout << '\n';
 
     // check number of nodes in mesh
 
@@ -79,6 +85,7 @@ int main(int argc, char **argv) {
     std::cout << "No of indexes: " << fem.getFreeNodes().size() + fem.getConstrainedNodes().size() << '\n';
     std::cout << "No of constrained nodes: " << fem.getConstrainedNodes().size() << ' ' << dir.size() << '\n';
 
+    std::cout << fem.getNodeCoordinates().size();
     fem.outputData("/Users/andrei/CLionProjects/FEM/outputs/out.txt");
 
 //    for (auto p : fem.getNodeIndexes()) {

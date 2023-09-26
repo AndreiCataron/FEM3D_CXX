@@ -35,6 +35,7 @@ public:
 
     //getters
     std::unordered_map<std::size_t, std::vector<double> > getDirichletBC();
+    std::unordered_map<std::size_t, std::tuple<double, double, double> > getNodeCoordinates();
 };
 
 #endif

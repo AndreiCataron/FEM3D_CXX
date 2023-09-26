@@ -61,6 +61,10 @@ std::unordered_map<std::size_t, std::vector<double> > FEM3DVector::getDirichletB
     return dirichlet_bc;
 }
 
+std::unordered_map<std::size_t, std::tuple<double, double, double> > FEM3DVector::getNodeCoordinates() {
+    return node_coordinates;
+}
+
 void FEM3DVector::outputData(std::string file) {
     std::ofstream myFile;
     myFile.open(file, std::ios::out | std::ios::trunc);
@@ -71,9 +75,15 @@ void FEM3DVector::outputData(std::string file) {
     }
     myFile << '\n';
 
-    // output node coordinates
+    // output node coordinates as tag : coord1 coord2 coord3
     for (const auto& [tag, coord] : node_coordinates) {
         myFile << tag << ' ' << std::get<0>(coord) << ' ' << std::get<1>(coord) << ' ' << std::get<2>(coord) << ' ';
+    }
+    myFile << '\n';
+
+    // output displacements
+    for (auto d : displacements) {
+        myFile << d << ' ';
     }
 
     myFile.close();

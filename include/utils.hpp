@@ -3,9 +3,12 @@
 
 #include <vector>
 #include <unordered_map>
+#include "LinearElasticity3D.hpp"
 
 namespace utils {
     int binom(int, int);
+
+    void checkParamsLE(LinearElasticity3D::ParamsLE&);
 
     template <typename T> void deleteDuplicatesFromVector(std::vector<T> &vec) {
         std::sort(vec.begin(), vec.end());
