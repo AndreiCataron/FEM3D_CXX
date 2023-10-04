@@ -1,28 +1,33 @@
 #include <iostream>
 #include <cassert>
 #include "../include/LinearElasticity3D.hpp"
+#include "../include/utils.hpp"
 
 int main() {
-    LinearElasticity3D::ParamsLE par = {
-            0, // h
-            "x == 0", // dirichlet BC
-            3, // quadrature precision
-            2, // order of lagrage polynomials
-            {"2 * x", "3 * y + 1", "x + z"}, // g
-            {"0", "1", "0"}, // f
-            1, // lambda
-            2, // mu
+    LinearElasticity3D::ParamsLE par2 = {
+            0.1, // h
+            "0 == 0",
+            1,
+            1,
+            {"-1.9831", "-1.9831", "50.016"},
+            {"x * z + 1 / 56 * x ^ 2", "y * z + 1 / 56 * y ^ 2", "- z ^ 2 + 1 / 56 * z ^ 2"},
+            56,
+            36,
+            -1,
+            -1
     };
 
-    LinearElasticity3D fem(par);
+    utils::checkParamsLE(par2);
 
-    int check = fem.checkNodeSatisfiesBoundaryEquation(0, 0.5, 0.3);
+    LinearElasticity3D fem(par2);
+
+    int check = fem.checkNodeSatisfiesBoundaryEquation(0, 0, 0.3);
 
     assert(check == 1);
 
     check = fem.checkNodeSatisfiesBoundaryEquation(0.2, 0.3, 0);
 
-    assert(check == 0);
+    assert(check == 1);
 
 
     return 0;

@@ -17,7 +17,7 @@ public:
 private:
     const ParamsLE paramsLE_;
 public:
-    explicit LinearElasticity3D(const ParamsLE&);
+    explicit LinearElasticity3D(const ParamsLE&, const Mesh&);
 
     void computeStiffnessMatrixAndLoadVector() override;
     void solveDisplacements() override;

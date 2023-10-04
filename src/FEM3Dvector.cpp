@@ -2,8 +2,9 @@
 
 #include <gmsh.h>
 #include <fstream>
+#include "../include/utils.hpp"
 
-FEM3DVector::FEM3DVector(const FEM3DVector::ParamsVector &params) : params3d_(params), FEM3D(params){}
+FEM3DVector::FEM3DVector(const FEM3DVector::ParamsVector &params, const Mesh &msh) : params3d_(params), FEM3D(params, msh){}
 
 void FEM3DVector::setBoundaryConditions() {
     std::vector<std::pair<int, int> > domain_entity;
@@ -82,9 +83,62 @@ void FEM3DVector::outputData(std::string file) {
     myFile << '\n';
 
     // output displacements
-    for (auto d : displacements) {
-        myFile << d << ' ';
+
+    for (const auto& [tag, idx] : nodeIndexes) {
+        myFile << tag << ' ' << displacements(3 * idx) << ' ' << displacements(3 * idx + 1) << ' ' << displacements(3 * idx + 2) << ' ';
     }
 
+//    for (auto d : displacements) {
+//        myFile << d << ' ';
+//    }
+
     myFile.close();
+}
+
+double FEM3DVector::computeL2Error() {
+    double result = 0;
+
+    // get elements
+    std::vector<int> elemTypes;
+    std::vector<std::vector<std::size_t> > elemTags, nTags;
+    gmsh::model::mesh::getElements(elemTypes, elemTags, nTags, 3);
+
+    // get element type
+    int elementType = elemTypes[0];
+    // element tags
+    std::vector<std::size_t> elementTags = elemTags[0];
+    // node tags
+    std::vector<std::size_t> nodeTags = nTags[0];
+
+    // get integration points
+    std::vector<double> localCoord, weights;
+    std::string intRule = "Gauss" + std::to_string(params3d_.quadrature_precision);
+
+    gmsh::model::mesh::getIntegrationPoints(elementType, intRule, localCoord, weights);
+
+    int noInterpolationPoints = int(localCoord.size()) / 3;
+
+    int noNodesPerElement = utils::binom(int(params3d_.element_order) + 3, 3);
+
+    // get jacobians
+    std::vector<double> jacobians, determinants, coord;
+    std::vector<double> jacobianCoords = {0.25, 0.25, 0.25};
+
+    gmsh::model::mesh::preallocateJacobians(elementType, 1, false, true, false, jacobians, determinants, coord);
+    gmsh::model::mesh::getJacobians(elementType, jacobianCoords, jacobians, determinants, coord);
+
+    for (int i = 0; i < elementTags.size(); i++) {
+        // get tags of nodes in current element
+        std::vector<std::size_t> elementNodeTags = std::vector<std::size_t>(nodeTags.begin() + i * noNodesPerElement,
+                                                                            nodeTags.begin() +
+                                                                            (i + 1) * noNodesPerElement);
+
+        double integral = 0;
+
+        for (auto tag : elementNodeTags) {
+
+        }
+    }
+
+    return 0;
 }

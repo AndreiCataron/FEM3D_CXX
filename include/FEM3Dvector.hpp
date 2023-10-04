@@ -24,7 +24,7 @@ protected:
     std::unordered_map<std::size_t, std::tuple<double, double, double> > node_coordinates;
 
 public:
-    explicit FEM3DVector(const ParamsVector&);
+    explicit FEM3DVector(const ParamsVector&, const Mesh&);
 
     void setBoundaryConditions() override;
     void indexConstrainedNodes() override;
@@ -32,6 +32,8 @@ public:
     void getNodesCoordinates() override;
 
     void outputData(std::string) override;
+
+    double computeL2Error() override;
 
     //getters
     std::unordered_map<std::size_t, std::vector<double> > getDirichletBC();

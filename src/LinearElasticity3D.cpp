@@ -2,11 +2,9 @@
 #include "../include/utils.hpp"
 #include <iostream>
 #include <gmsh.h>
-#include <eigen3/Eigen/Dense>
-#include <eigen3/Eigen/Sparse>
 #include <eigen3/Eigen/IterativeLinearSolvers>
 
-LinearElasticity3D::LinearElasticity3D(const LinearElasticity3D::ParamsLE &params) : paramsLE_(params), FEM3DVector(params){}
+LinearElasticity3D::LinearElasticity3D(const LinearElasticity3D::ParamsLE &params, const Mesh &msh) : paramsLE_(params), FEM3DVector(params, msh){}
 
 void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
     // initialize D matrix
@@ -32,6 +30,7 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
     // node tags
     std::vector<std::size_t> nodeTags = nTags[0];
     // number of nodes in the mesh
+    // first, delete duplicate nodes (which appear because they are shared by multiple surfaces)
     std::vector<std::size_t> tags;
     std::vector<double> co, pc;
     gmsh::model::mesh::getNodes(tags, co, pc, -1, -1, true, false);
@@ -80,7 +79,7 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
     for (int i = 0; i < noInterpolationPoints; i++) {
         Eigen::MatrixXd Mktemp = Eigen::MatrixXd::Zero(3 * noNodesPerElement, 3);
         for (int j = 0; j < noBasisFunctions; j++) {
-            Eigen::MatrixXd basisFunctionMatrix(3, 3);
+            Eigen::MatrixXd basisFunctionMatrix = Eigen::MatrixXd::Zero(3, 3);
             basisFunctionMatrix(0, 0) = basisFunctionsValues[i * noInterpolationPoints + j];
             basisFunctionMatrix(1, 1) = basisFunctionsValues[i * noInterpolationPoints + j];
             basisFunctionMatrix(2, 2) = basisFunctionsValues[i * noInterpolationPoints + j];
@@ -174,7 +173,7 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
 }
 
 void LinearElasticity3D::solveDisplacements() {
-    displacements = Eigen::VectorXd(nodeIndexes.size());
+    displacements = Eigen::VectorXd(3 * nodeIndexes.size());
 
     // assemble vector of constrained values
     Eigen::VectorXd constrainedValues(3 * constrainedNodes.size());
@@ -183,38 +182,41 @@ void LinearElasticity3D::solveDisplacements() {
 
     std::vector<double> tempDirBC;
 
-    for (int i = 0; i < constrainedNodes.size(); i++) {
-        std::size_t idx = reverseNodeIndexes[constrainedNodes[i]];
+    for (int idx : constrainedNodes) {
+        std::size_t tag = reverseNodeIndexes[idx];
 
-        tempDirBC = dirichlet_bc[idx];
-        constrainedValues(3 * i) = tempDirBC[0];
-        constrainedValues(3 * i + 1) = tempDirBC[1];
-        constrainedValues(3 * i + 2) = tempDirBC[2];
+        tempDirBC = dirichlet_bc[tag];
+
+        constrainedValues(3 * idx) = tempDirBC[0];
+        constrainedValues(3 * idx + 1) = tempDirBC[1];
+        constrainedValues(3 * idx + 2) = tempDirBC[2];
     }
 
-    std::vector<int> freeIndexes;
-    freeIndexes.reserve(3 * freeNodes.size());
-    for (auto idx : freeNodes) {
-        freeIndexes.emplace_back(3 * idx);
-        freeIndexes.emplace_back(3 * idx + 1);
-        freeIndexes.emplace_back(3 * idx + 2);
-    }
+    displacements.head(3 * constrainedNodes.size()) = constrainedValues;
 
-    load_vector = load_vector(freeIndexes) -
+//    std::vector<int> freeIndexes;
+//    freeIndexes.reserve(3 * freeNodes.size());
+//    for (auto idx : freeNodes) {
+//        freeIndexes.emplace_back(3 * idx);
+//        freeIndexes.emplace_back(3 * idx + 1);
+//        freeIndexes.emplace_back(3 * idx + 2);
+//    }
+
+    load_vector = load_vector.tail(3 * freeNodes.size()) -
             stiffness_matrix.bottomRows(3 * freeNodes.size()).leftCols(3 * constrainedNodes.size()) * constrainedValues;
 
     stiffness_matrix = stiffness_matrix.bottomRightCorner(3 * freeNodes.size(), 3 * freeNodes.size());
 
     Eigen::ConjugateGradient<Eigen::SparseMatrix<double> > solver;
 
-    displacements = solver.compute(stiffness_matrix).solve(load_vector);
+    displacements.tail(3 * freeNodes.size()) = solver.compute(stiffness_matrix).solve(load_vector);
 
     try {
-        if(solver.info() != Eigen::Success) {
+        if (solver.info() != Eigen::Success) {
                 // solving failed
                 throw 1;
-            }
         }
+    }
     catch (int err) {
         std::cout << "solving the sparse system failed";
         return;

@@ -6,10 +6,15 @@
 #include "../include/exprtk/exprtk.hpp"
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
+#include "Mesh.hpp"
 
 typedef exprtk::symbol_table<double> symbol_table_t;
 typedef exprtk::expression<double>   expression_t;
 typedef exprtk::parser<double>       parser_t;
+
+// todo-idea Possible Idea
+//  use actual functions for f, g etc and pass them as parameters
+//  instead of using parseExpression
 
 class FEM3D{
 public:
@@ -25,6 +30,8 @@ public:
     };
 
 private:
+    // the mesh
+    Mesh mesh;
     // struct of parameters
     const Params params_;
     // for parseExpression
@@ -49,7 +56,7 @@ protected:
 
 public:
     // constructor
-    explicit FEM3D(Params );
+    explicit FEM3D(Params, Mesh&);
 
     // methods
     double parseExpression(const std::string&, double, double, double);
@@ -67,6 +74,8 @@ public:
     virtual void solveDisplacements() = 0;
 
     virtual void outputData(std::string) = 0;
+
+    virtual double computeL2Error() = 0;
 
     //getters
     FEM3D::Params getParams();
