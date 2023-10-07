@@ -7,6 +7,7 @@
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
 #include "Mesh.hpp"
+#include "params.hpp"
 
 typedef exprtk::symbol_table<double> symbol_table_t;
 typedef exprtk::expression<double>   expression_t;
@@ -17,21 +18,7 @@ typedef exprtk::parser<double>       parser_t;
 //  instead of using parseExpression
 
 class FEM3D{
-public:
-    struct Params{
-        // mesh size
-        double h;
-        // equation of boundary surfaces where Dirichlet BC are imposed
-        std::string dirichlet_bc;
-        // Quadrature precision
-        unsigned int quadrature_precision;
-        // Order of Lagrange polynomials
-        unsigned int element_order;
-    };
-
 private:
-    // the mesh
-    Mesh mesh;
     // struct of parameters
     const Params params_;
     // for parseExpression
@@ -41,6 +28,8 @@ private:
     parser_t parser;
 
 protected:
+    // the mesh
+    Mesh mesh;
     // dictionary of type tag : index
     std::unordered_map<std::size_t, int> nodeIndexes;
     // indexes of constrained nodes
@@ -55,16 +44,15 @@ protected:
     Eigen::VectorXd displacements;
 
 public:
-    // constructor
-    explicit FEM3D(Params, Mesh&);
+    // constructors
+    explicit FEM3D(Params);
+    FEM3D(Params, Mesh&);
 
     // methods
     double parseExpression(const std::string&, double, double, double);
 
-    void setupMesh();
     virtual void indexConstrainedNodes() = 0;
     void indexFreeNodes();
-    virtual void getNodesCoordinates() = 0;
 
     virtual void setBoundaryConditions() = 0;
     // check if a node is on a part of the boundary where boundary conditions are imposed
@@ -78,7 +66,7 @@ public:
     virtual double computeL2Error() = 0;
 
     //getters
-    FEM3D::Params getParams();
+    Params getParams();
     std::unordered_map<std::size_t, int> getNodeIndexes();
     std::vector<int> getConstrainedNodes();
     std::vector<int> getFreeNodes();

@@ -4,7 +4,7 @@ find_library(FOO_LIB gmsh)
 
 find_path(FOO_PATH gmsh.h)
 
-add_executable(srctarget ../include/LinearElasticity3D.hpp LinearElasticity3D.cpp main.cpp ../include/FEM3D.hpp FEM3D.cpp ../include/FEM3Dvector.hpp FEM3Dvector.cpp ../include/utils.hpp utils.cpp ../include/Mesh.hpp Mesh.cpp)
+add_executable(srctarget ../include/FEM3D.hpp FEM3D.cpp ../include/FEM3Dvector.hpp FEM3Dvector.cpp ../include/LinearElasticity3D.hpp LinearElasticity3D.cpp main.cpp ../include/utils.hpp utils.cpp ../include/Mesh.hpp Mesh.cpp ../include/params.hpp)
 
 find_package(OpenMP REQUIRED)
 

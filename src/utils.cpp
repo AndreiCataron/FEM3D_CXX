@@ -6,7 +6,7 @@ int utils::binom(int n, int k) {
     return int(coefficient);
 }
 
-void utils::checkParamsLE(LinearElasticity3D::ParamsLE &params) {
+void utils::checkParamsLE(ParamsLE &params) {
     // if E and nu are given, compute lambda and mu
     if (params.lambda < 0 && params.mu < 0 && params.nu >= -1 && params.nu <= 0.5 && params.E > 0) {
         params.lambda = params.E / ((1 + params.nu) * (1 - 2 * params.nu));

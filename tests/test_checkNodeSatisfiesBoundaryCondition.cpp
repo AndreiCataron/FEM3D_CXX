@@ -1,11 +1,17 @@
 #include <iostream>
 #include <cassert>
+#include "../include/FEM3D.hpp"
+#include "../include/FEM3Dvector.hpp"
 #include "../include/LinearElasticity3D.hpp"
 #include "../include/utils.hpp"
+#include "../include/Mesh.hpp"
+#include "../include/params.hpp"
 
-int main() {
-    LinearElasticity3D::ParamsLE par2 = {
+int main(int argc, char **argv) {
+    ParamsLE par2 = {
             0.1, // h
+            10,
+            1,
             "0 == 0",
             1,
             1,
@@ -18,6 +24,8 @@ int main() {
     };
 
     utils::checkParamsLE(par2);
+
+    Mesh m(argc, argv);
 
     LinearElasticity3D fem(par2);
 

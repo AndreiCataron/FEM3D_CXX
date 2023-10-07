@@ -2,11 +2,12 @@
 #include "../include/LinearElasticity3D.hpp"
 #include <gmsh.h>
 #include <unordered_map>
-#include <cassert>
 
 int main(int argc, char **argv) {
-    LinearElasticity3D::ParamsLE par = {
+    ParamsLE par = {
             0.1, // h
+            10,
+            1,
             "0 == 0",
             1,
             1,
@@ -17,6 +18,8 @@ int main(int argc, char **argv) {
             -1,
             -1
     };
+
+    Mesh msh(argc, argv);
 
     LinearElasticity3D fem(par);
 

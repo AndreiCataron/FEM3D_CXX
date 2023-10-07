@@ -6,12 +6,18 @@
 #include <utility>
 #include "../include/exprtk/exprtk.hpp"
 #include "../include/Mesh.hpp"
+#include "../include/params.hpp"
 
 typedef exprtk::symbol_table<double> symbol_table_t;
 typedef exprtk::expression<double>   expression_t;
 typedef exprtk::parser<double>       parser_t;
 
-FEM3D::FEM3D(FEM3D::Params params, Mesh &msh) : params_(std::move(params)), mesh(msh) {
+FEM3D::FEM3D(Params params) : params_(std::move(params)){
+    Mesh msh;
+    mesh = msh;
+}
+
+FEM3D::FEM3D(Params params, Mesh &msh) : params_(std::move(params)), mesh(msh) {
     symbol_table.add_variable("x", _x);
     symbol_table.add_variable("y", _y);
     symbol_table.add_variable("z", _z);
@@ -40,18 +46,6 @@ int FEM3D::checkNodeSatisfiesBoundaryEquation(double nx, double ny, double nz) {
     return 0;
 }
 
-void FEM3D::setupMesh() {
-    gmsh::option::setNumber("Mesh.CharacteristicLengthMax", params_.h);
-    gmsh::option::setNumber("Mesh.MaxNumThreads3D", 10);
-    gmsh::option::setNumber("General.Verbosity", 1);
-
-    gmsh::model::mesh::generate(3);
-
-    gmsh::model::mesh::setOrder(int(params_.element_order));
-
-    getNodesCoordinates();
-}
-
 void FEM3D::indexFreeNodes() {
     // get nodes
     std::vector<std::size_t> nodeTags;
@@ -70,7 +64,7 @@ void FEM3D::indexFreeNodes() {
 
 // getters
 
-FEM3D::Params FEM3D::getParams() {
+Params FEM3D::getParams() {
     return params_;
 }
 

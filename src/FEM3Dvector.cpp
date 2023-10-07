@@ -4,7 +4,9 @@
 #include <fstream>
 #include "../include/utils.hpp"
 
-FEM3DVector::FEM3DVector(const FEM3DVector::ParamsVector &params, const Mesh &msh) : params3d_(params), FEM3D(params, msh){}
+FEM3DVector::FEM3DVector(const ParamsVector &params) : params3d_(params), FEM3D(params) {}
+
+FEM3DVector::FEM3DVector(const ParamsVector &params, Mesh &msh) : params3d_(params), FEM3D(params, msh){}
 
 void FEM3DVector::setBoundaryConditions() {
     std::vector<std::pair<int, int> > domain_entity;
@@ -23,13 +25,15 @@ void FEM3DVector::setBoundaryConditions() {
             int bc = checkNodeSatisfiesBoundaryEquation(coord[3 * i], coord[3 * i + 1], coord[3 * i + 2]);
 
             if (bc == 1) {
-                std::vector<double> prescribed_condition;
-                prescribed_condition.reserve(3);
+                if (dirichlet_bc.find(tag) == dirichlet_bc.end()) {
+                    std::vector<double> prescribed_condition;
+                    prescribed_condition.reserve(3);
 
-                for (const auto &cond : params3d_.g) {
-                    prescribed_condition.emplace_back(parseExpression(cond, coord[3 * i], coord[3 * i + 1], coord[3 * i + 2]));
+                    for (const auto &cond : params3d_.g) {
+                        prescribed_condition.emplace_back(parseExpression(cond, coord[3 * i], coord[3 * i + 1], coord[3 * i + 2]));
+                    }
+                    dirichlet_bc[tag] = prescribed_condition;
                 }
-                dirichlet_bc[tag] = prescribed_condition;
             }
 
             // add here other BC
@@ -48,22 +52,8 @@ void FEM3DVector::indexConstrainedNodes() {
     }
 }
 
-void FEM3DVector::getNodesCoordinates() {
-    std::vector<std::size_t> nodeTags;
-    std::vector<double> coord, parametricCoord;
-    gmsh::model::mesh::getNodes(nodeTags, coord, parametricCoord, -1, -1, true, false);
-
-    for (int i = 0; i < nodeTags.size(); i++) {
-        node_coordinates[nodeTags[i]] = {coord[3 * i], coord[3 * i + 1], coord[3 * i + 2]};
-    }
-}
-
 std::unordered_map<std::size_t, std::vector<double> > FEM3DVector::getDirichletBC() {
     return dirichlet_bc;
-}
-
-std::unordered_map<std::size_t, std::tuple<double, double, double> > FEM3DVector::getNodeCoordinates() {
-    return node_coordinates;
 }
 
 void FEM3DVector::outputData(std::string file) {
@@ -77,7 +67,7 @@ void FEM3DVector::outputData(std::string file) {
     myFile << '\n';
 
     // output node coordinates as tag : coord1 coord2 coord3
-    for (const auto& [tag, coord] : node_coordinates) {
+    for (const auto& [tag, coord] : mesh.elems.node_coordinates) {
         myFile << tag << ' ' << std::get<0>(coord) << ' ' << std::get<1>(coord) << ' ' << std::get<2>(coord) << ' ';
     }
     myFile << '\n';
@@ -98,40 +88,10 @@ void FEM3DVector::outputData(std::string file) {
 double FEM3DVector::computeL2Error() {
     double result = 0;
 
-    // get elements
-    std::vector<int> elemTypes;
-    std::vector<std::vector<std::size_t> > elemTags, nTags;
-    gmsh::model::mesh::getElements(elemTypes, elemTags, nTags, 3);
-
-    // get element type
-    int elementType = elemTypes[0];
-    // element tags
-    std::vector<std::size_t> elementTags = elemTags[0];
-    // node tags
-    std::vector<std::size_t> nodeTags = nTags[0];
-
-    // get integration points
-    std::vector<double> localCoord, weights;
-    std::string intRule = "Gauss" + std::to_string(params3d_.quadrature_precision);
-
-    gmsh::model::mesh::getIntegrationPoints(elementType, intRule, localCoord, weights);
-
-    int noInterpolationPoints = int(localCoord.size()) / 3;
-
-    int noNodesPerElement = utils::binom(int(params3d_.element_order) + 3, 3);
-
-    // get jacobians
-    std::vector<double> jacobians, determinants, coord;
-    std::vector<double> jacobianCoords = {0.25, 0.25, 0.25};
-
-    gmsh::model::mesh::preallocateJacobians(elementType, 1, false, true, false, jacobians, determinants, coord);
-    gmsh::model::mesh::getJacobians(elementType, jacobianCoords, jacobians, determinants, coord);
-
-    for (int i = 0; i < elementTags.size(); i++) {
+    for (int i = 0; i < mesh.elems.elementTags.size(); i++) {
         // get tags of nodes in current element
-        std::vector<std::size_t> elementNodeTags = std::vector<std::size_t>(nodeTags.begin() + i * noNodesPerElement,
-                                                                            nodeTags.begin() +
-                                                                            (i + 1) * noNodesPerElement);
+        std::vector<std::size_t> elementNodeTags = std::vector<std::size_t>(mesh.elems.nodeTags.begin() + i * mesh.elems.noNodesPerElement,
+                                                                            mesh.elems.nodeTags.begin() + (i + 1) * mesh.elems.noNodesPerElement);
 
         double integral = 0;
 
