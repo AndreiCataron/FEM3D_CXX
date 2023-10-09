@@ -14,8 +14,8 @@ int main(int argc, char **argv) {
             10,
             1,
             "0 == 0", // dirichlet BC
-            1, // quadrature precision
-            1, // order of lagrange polynomials
+            2, // quadrature precision
+            2, // order of lagrange polynomials
             { "0", "0", "0" }, // f
             { "x", "y", "z" }, // g
             -1, // lambda

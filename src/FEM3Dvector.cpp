@@ -3,6 +3,7 @@
 #include <gmsh.h>
 #include <fstream>
 #include "../include/utils.hpp"
+#include <iostream>
 
 FEM3DVector::FEM3DVector(const ParamsVector &params) : params3d_(params), FEM3D(params) {}
 
@@ -47,13 +48,12 @@ void FEM3DVector::setBoundaryConditions() {
 
 void FEM3DVector::indexConstrainedNodes() {
     for (const auto& n : dirichlet_bc) {
-        constrainedNodes.emplace_back(nodeIndexes.size());
-        nodeIndexes[n.first] = int(nodeIndexes.size());
+        // check node is not already in node indexes
+        if (nodeIndexes.find(n.first) == nodeIndexes.end()) {
+            constrainedNodes.emplace_back(nodeIndexes.size());
+            nodeIndexes[n.first] = int(nodeIndexes.size());
+        }
     }
-}
-
-std::unordered_map<std::size_t, std::vector<double> > FEM3DVector::getDirichletBC() {
-    return dirichlet_bc;
 }
 
 void FEM3DVector::outputData(std::string file) {
@@ -101,4 +101,8 @@ double FEM3DVector::computeL2Error() {
     }
 
     return 0;
+}
+
+std::unordered_map<std::size_t, std::vector<double> > FEM3DVector::getDirichletBC() {
+    return dirichlet_bc;
 }

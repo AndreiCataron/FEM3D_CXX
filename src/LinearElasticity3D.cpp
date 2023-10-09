@@ -28,7 +28,7 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
     utils::deleteDuplicatesFromVector(tags);
     int noNodes = int(tags.size());
 
-    int noBasisFunctions = mesh.elems.noIntegrationPoints;
+    int noBasisFunctions = mesh.elems.noNodesPerElement;
     // number of columns of the strain matrix B introduced in Larson page 267
     int bNoCols = 3 * noBasisFunctions;
 
@@ -130,8 +130,6 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
     }
 
     stiffness_matrix.setFromTriplets(tripletList.begin(), tripletList.end());
-
-
 
 }
 
