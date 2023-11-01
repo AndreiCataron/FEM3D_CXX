@@ -90,8 +90,9 @@ double FEM3DVector::computeL2Error() {
 
     for (int i = 0; i < mesh.elems.elementTags.size(); i++) {
         // get tags of nodes in current element
-        std::vector<std::size_t> elementNodeTags = std::vector<std::size_t>(mesh.elems.nodeTags.begin() + i * mesh.elems.noNodesPerElement,
-                                                                            mesh.elems.nodeTags.begin() + (i + 1) * mesh.elems.noNodesPerElement);
+        std::vector<std::size_t> elementNodeTags = std::vector<std::size_t>(
+                mesh.elems.nodeTags.begin() + i * mesh.elems.noNodesPerElement,
+                mesh.elems.nodeTags.begin() + (i + 1) * mesh.elems.noNodesPerElement);
         double det = mesh.elems.determinants[i];
 
         double integral = 0;
@@ -102,26 +103,26 @@ double FEM3DVector::computeL2Error() {
             std::vector<double> exact;
             exact.reserve(3);
 
-            for (const auto &component : params3d_ -> exact_solution) {
-                exact.emplace_back(parseExpression(component, mesh.elems.globalCoord[i * mesh.elems.noNodesPerElement + 3 * j], mesh.elems.globalCoord[i * mesh.elems.noNodesPerElement + 3 * j + 1], mesh.elems.globalCoord[i * mesh.elems.noNodesPerElement + 3 * j + 2]));
+            for (const auto &component: params3d_->exact_solution) {
+                exact.emplace_back(parseExpression(component, mesh.elems.globalCoord[i * mesh.elems.localCoord.size() + 3 * j],
+                                                              mesh.elems.globalCoord[i * mesh.elems.localCoord.size() + 3 * j + 1],
+                                                              mesh.elems.globalCoord[i * mesh.elems.localCoord.size() + 3 * j + 2]));
             }
 
             // the approximate solution at the integration point
-            std::vector<double> approxSolution;
-            approxSolution.reserve(3);
+            std::vector<double> approxSolution = {0, 0, 0};
 
             for (int k = 0; k < mesh.elems.noNodesPerElement; k++) {
                 std::size_t tag = elementNodeTags[k];
                 int index = nodeIndexes[tag];
 
-                approxSolution[0] += displacements(3 * index) * mesh.elems.basisFunctionsValues[k * mesh.elems.noNodesPerElement + j];
-                approxSolution[1] += displacements(3 * index + 1) * mesh.elems.basisFunctionsValues[k * mesh.elems.noNodesPerElement + j];
-                approxSolution[2] += displacements(3 * index + 2) * mesh.elems.basisFunctionsValues[k * mesh.elems.noNodesPerElement + j];
+                approxSolution[0] += displacements(3 * index) *
+                                     mesh.elems.basisFunctionsValues[j * mesh.elems.noNodesPerElement + k];
+                approxSolution[1] += displacements(3 * index + 1) *
+                                     mesh.elems.basisFunctionsValues[j * mesh.elems.noNodesPerElement + k];
+                approxSolution[2] += displacements(3 * index + 2) *
+                                     mesh.elems.basisFunctionsValues[j * mesh.elems.noNodesPerElement + k];
             }
-
-//            std::cout << mesh.elems.globalCoord[i * mesh.elems.noNodesPerElement + 3 * j] << ' ' << mesh.elems.globalCoord[i * mesh.elems.noNodesPerElement + 3 * j + 1] << ' ' << mesh.elems.globalCoord[i * mesh.elems.noNodesPerElement + 3 * j + 2] <<
-//                      ' ' << exact[0] << ' ' << exact[1] << ' ' << exact[2] << ' ' << app << '\n';
-
 
             for (int t = 0; t < 3; t++) {
                 integral += mesh.elems.weights[j] * (exact[t] - approxSolution[t]) * (exact[t] - approxSolution[t]);
