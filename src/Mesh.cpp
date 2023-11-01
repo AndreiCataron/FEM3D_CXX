@@ -1,6 +1,5 @@
 #include "../include/Mesh.hpp"
 #include <gmsh.h>
-#include "../include/params.hpp"
 #include "../include/utils.hpp"
 #include <iostream>
 
@@ -28,27 +27,6 @@ Mesh::Mesh(int argc, char **argv, std::shared_ptr<Params> const &par) : Mesh(arg
     params = par;
 }
 
-//Mesh::Mesh(const Mesh &other) : elems(other.elems) {
-//    params = new Params;
-//    *params = *other.params;
-//}
-//
-//Mesh& Mesh::operator=(const Mesh &other) {
-//    if (this == &other) {
-//        return *this;
-//    }
-//
-//    delete params;
-//
-//    params = new Params;
-//    *params = *other.params;
-//
-//    elems = other.elems;
-//
-//    return *this;
-//
-//}
-
 Mesh::~Mesh() {
     if (gmsh::isInitialized() == 1) {
         gmsh::finalize();
@@ -68,6 +46,33 @@ void Mesh::getNodesCoordinates() {
 void Mesh::cubeMesh() {
     gmsh::model::occ::addBox(0, 0, 0, 1, 1, 1, 1000);
     gmsh::model::occ::synchronize();
+}
+
+void Mesh::computeInverseJacobians() {
+    elems.inverse_jacobians.reserve(int(elems.jacobians.size() / 9));
+
+    for (int i = 0; i < int(elems.jacobians.size() / 9); i++) {
+        // jacobian is elems.jacobians[9 * i, 9 * i + 3, 9 * i + 6
+        //                             9 * i + 1, 9 * i + 4, 9 * i + 7
+        //                             9 * i + 2, 9 * i + 5, 9 * i + 8]
+        Eigen::MatrixXd jacobian(3, 3);
+        jacobian << elems.jacobians[9 * i], elems.jacobians[9 * i + 3], elems.jacobians[9 * i + 6],
+                    elems.jacobians[9 * i + 1], elems.jacobians[9 * i + 4], elems.jacobians[9 * i + 7],
+                    elems.jacobians[9 * i + 2], elems.jacobians[9 * i + 5], elems.jacobians[9 * i + 8];
+
+        Eigen::MatrixXd inverseJacobian(3, 3);
+        inverseJacobian << - jacobian(1, 2) * jacobian(2, 1) + jacobian(1, 1) * jacobian(2, 2),
+                           jacobian(0, 2) * jacobian(2, 1) - jacobian(0, 1) * jacobian(2, 2),
+                           - jacobian(0, 2) * jacobian(1, 1) + jacobian(0, 1) * jacobian(1, 2),
+                           jacobian(1, 2) * jacobian(2, 0) - jacobian(1, 0) * jacobian(2, 2),
+                           - jacobian(0, 2) * jacobian(2, 0) + jacobian(0, 0) * jacobian(2, 2),
+                           jacobian(0, 2) * jacobian(1, 0) - jacobian(0, 0) * jacobian(1, 2),
+                           - jacobian(1, 1) * jacobian(2, 0) + jacobian(1, 0) * jacobian(2, 1),
+                           jacobian(0, 1) * jacobian(2, 0) - jacobian(0, 0) * jacobian(2, 1),
+                           - jacobian(0, 1) * jacobian(1, 0) + jacobian(0, 0) * jacobian(1, 1);
+
+        elems.inverse_jacobians.emplace_back(1 / elems.determinants[i] * inverseJacobian);
+    }
 }
 
 void Mesh::initMesh() {
@@ -121,10 +126,22 @@ void Mesh::initMesh() {
     gmsh::model::mesh::getBasisFunctions(elems.elementType, elems.localCoord, functionSpaceType, numComp, elems.basisFunctionsGradients, numOrient);
 
 
-    // get jacobians
+    // get the determinant of the jacobian of each element
+    // todo-idea Modification
+    //   check line 197 below for parallelization
+    //   https://gitlab.onelab.info/gmsh/fem/-/blob/master/src/term/Assembler.cpp?ref_type=heads
     std::vector<double> jacobianCoords = {0.25, 0.25, 0.25};
 
-    gmsh::model::mesh::preallocateJacobians(elems.elementType, 1, false, true, false, elems.jacobians, elems.determinants, elems.coord);
-    gmsh::model::mesh::getJacobians(elems.elementType, jacobianCoords, elems.jacobians, elems.determinants, elems.coord);
+    std::vector<double> dummyCoords;
+    gmsh::model::mesh::preallocateJacobians(elems.elementType, 1, true, true, false, elems.jacobians, elems.determinants, dummyCoords);
+    gmsh::model::mesh::getJacobians(elems.elementType, jacobianCoords, elems.jacobians, elems.determinants, dummyCoords);
 
+    // get the global coordinates of the integration points in each element
+
+    std::vector<double> dummyDeterminants;
+    std::vector<double> dummyJacobians;
+    gmsh::model::mesh::preallocateJacobians(elems.elementType, int(elems.localCoord.size()), false, true, true, dummyJacobians, dummyDeterminants, elems.globalCoord);
+    gmsh::model::mesh::getJacobians(elems.elementType, elems.localCoord, dummyJacobians, dummyDeterminants, elems.globalCoord);
+
+    computeInverseJacobians();
 }

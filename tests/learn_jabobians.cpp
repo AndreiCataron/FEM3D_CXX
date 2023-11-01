@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
     gmsh::option::setNumber("General.Verbosity", 1);
 
     gmsh::model::mesh::generate(3);
-    gmsh::model::mesh::setOrder(3);
+    gmsh::model::mesh::setOrder(1);
     gmsh::option::setNumber("Mesh.NumSubEdges", 5);
 
 //    std::set<std::string> args(argv, argv + argc);
@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
 
         // Integration Points
 
-        std::string intRule = "Gauss1";
+        std::string intRule = "Gauss2";
         std::vector<double> localCoord, weights;
 
         std::cout << "\n";
@@ -72,22 +72,29 @@ int main(int argc, char **argv) {
 
         gmsh::model::mesh::getBasisFunctions(elemType, localCoord, functionSpaceType, numComp, basisFunctions, numOrient);
 
-        std::cout << "Num comp: " << numComp;
-        std::cout << "\n" << basisFunctions.size() << "\n";
-        for(auto b : basisFunctions){
-            std::cout << b << " ";
-        }
-        std::cout << "\n" << numOrient;
+//        std::cout << "Num comp: " << numComp;
+//        std::cout << "\n" << basisFunctions.size() << "\n";
+//        for(auto b : basisFunctions){
+//            std::cout << b << " ";
+//        }
+//        std::cout << "\n" << numOrient;
 
         // Jacobians
 
         std::vector<double> jacobians, determinants, coord;
 
-        gmsh::model::mesh::preallocateJacobians(elemType, 1, false, true, false, jacobians, determinants, coord);
+        gmsh::model::mesh::preallocateJacobians(elemType, 1, true, true, true, jacobians, determinants, coord);
         gmsh::model::mesh::getJacobians(elemType, localCoord, jacobians, determinants, coord);
 
 //        std::cout << "\n" << "sto";
-//        for(auto i : jacobians) std::cout << i << ' ';
+//        for (int i = 0; i < jacobians.size(); i++){
+//            std::cout << jacobians[i] << ' ';
+//            if (i % 9 == 0) std::cout << '\n';
+//        }
+//
+//        std::cout << '\n' << "DETERMINANTS";
+//        for (auto i : determinants) std::cout << i << ' ';
+//        std::cout << '\n';
 //        std::cout << '\n' << "sto2" << '\n';
 //        // tetrahedron volume = determinant / 6
 //        for(auto i : determinants){
@@ -103,6 +110,21 @@ int main(int argc, char **argv) {
         std::cout << "\n" << dim << ' ' << tag << '\n';
         for(auto i : nodeTags) std::cout << i << " ";
         std::cout << "Number of nodes in element: " << nodeTags.size() << '\n';
+
+        gmsh::model::mesh::getJacobian(622, localCoord, jacobians, determinants, coord);
+
+        std::cout << jacobians.size() << ' ' << determinants.size() << ' ' << coord.size() << ' ' << localCoord.size() << '\n';
+        for (int i = 0; i < jacobians.size(); i++){
+            std::cout << jacobians[i] << ' ';
+            if (i > 0 && (i + 1) % 9 == 0) std::cout << '\n';
+        }
+        std::cout << '\n';
+        for (auto i : coord) std::cout << i << ' ';
+        std::cout << '\n';
+
+        std::cout << '\n' << "DETERMINANTS" << '\n';
+        for (auto i : determinants) std::cout << i << ' ';
+        std::cout << '\n';
 
         for(auto i : nodeTags) {
             std::vector<double> coordInt, localCoordInt;

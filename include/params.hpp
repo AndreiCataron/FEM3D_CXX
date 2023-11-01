@@ -19,6 +19,7 @@ struct Params{
 };
 
 struct ParamsVector : Params{
+    std::vector<std::string> exact_solution;
     std::vector<std::string> f;
     std::vector<std::string> g;
 };

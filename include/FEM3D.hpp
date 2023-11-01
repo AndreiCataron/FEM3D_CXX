@@ -8,6 +8,7 @@
 #include <eigen3/Eigen/Sparse>
 #include "Mesh.hpp"
 #include "params.hpp"
+#include <memory>
 
 typedef exprtk::symbol_table<double> symbol_table_t;
 typedef exprtk::expression<double>   expression_t;
@@ -17,10 +18,15 @@ typedef exprtk::parser<double>       parser_t;
 //  use actual functions for f, g etc and pass them as parameters
 //  instead of using parseExpression
 
+// todo-idea Integration on threads
+//   check below
+//   https://gitlab.onelab.info/gmsh/fem/-/blob/master/src/post/Integrate.cpp
+
 class FEM3D{
 private:
     // struct of parameters
-    const Params params_;
+    // const Params params_;
+    std::shared_ptr<Params> params_;
     // for parseExpression
     double _x{}, _y{}, _z{};
     symbol_table_t symbol_table;
@@ -45,8 +51,8 @@ protected:
 
 public:
     // constructors
-    explicit FEM3D(Params);
-    FEM3D(Params, Mesh&);
+    explicit FEM3D(std::shared_ptr<Params> const&);
+    FEM3D(std::shared_ptr<Params> const&, Mesh&);
 
     // methods
     double parseExpression(const std::string&, double, double, double);
@@ -66,7 +72,6 @@ public:
     virtual double computeL2Error() = 0;
 
     //getters
-    Params getParams();
     std::unordered_map<std::size_t, int> getNodeIndexes();
     std::vector<int> getConstrainedNodes();
     std::vector<int> getFreeNodes();

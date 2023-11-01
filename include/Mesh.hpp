@@ -3,6 +3,7 @@
 
 #include <string>
 #include <memory>
+#include <eigen3/Eigen/Dense>
 #include "params.hpp"
 
 class Mesh {
@@ -28,7 +29,9 @@ public:
         int noNodesPerElement = -1;
 
         // jacobians
-        std::vector<double> jacobians = {}, determinants = {}, coord = {};
+        std::vector<double> jacobians = {}, determinants = {}, globalCoord = {};
+        // inverse jacobians
+        std::vector<Eigen::MatrixXd> inverse_jacobians;
     };
 
 public:
@@ -53,9 +56,9 @@ public:
     friend class LinearElasticity3D;
 
     void getNodesCoordinates();
-    void cubeMesh();
+    static void cubeMesh();
+    void computeInverseJacobians();
     void initMesh();
-
 };
 
 

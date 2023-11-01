@@ -7,7 +7,8 @@
 
 class FEM3DVector : public FEM3D {
 private:
-    const ParamsVector params3d_;
+    //const ParamsVector params3d_;
+    std::shared_ptr<ParamsVector> params3d_;
 
 protected:
     // store for each node on the boundary [tag : dirichlet bc]
@@ -17,8 +18,8 @@ protected:
     std::unordered_map<std::size_t, bool> neumann_bc;
 
 public:
-    explicit FEM3DVector(const ParamsVector&);
-    FEM3DVector(const ParamsVector&, Mesh&);
+    explicit FEM3DVector(std::shared_ptr<ParamsVector> const&);
+    FEM3DVector(std::shared_ptr<ParamsVector> const&, Mesh&);
 
     void setBoundaryConditions() override;
     void indexConstrainedNodes() override;

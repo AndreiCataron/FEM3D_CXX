@@ -5,9 +5,9 @@
 #include "../include/utils.hpp"
 #include <iostream>
 
-FEM3DVector::FEM3DVector(const ParamsVector &params) : params3d_(params), FEM3D(params) {}
+FEM3DVector::FEM3DVector(std::shared_ptr<ParamsVector> const &params) : params3d_(params), FEM3D(params) {}
 
-FEM3DVector::FEM3DVector(const ParamsVector &params, Mesh &msh) : params3d_(params), FEM3D(params, msh){}
+FEM3DVector::FEM3DVector(std::shared_ptr<ParamsVector> const &params, Mesh &msh) : params3d_(params), FEM3D(params, msh){}
 
 void FEM3DVector::setBoundaryConditions() {
     std::vector<std::pair<int, int> > domain_entity;
@@ -30,7 +30,7 @@ void FEM3DVector::setBoundaryConditions() {
                     std::vector<double> prescribed_condition;
                     prescribed_condition.reserve(3);
 
-                    for (const auto &cond : params3d_.g) {
+                    for (const auto &cond : params3d_ -> g) {
                         prescribed_condition.emplace_back(parseExpression(cond, coord[3 * i], coord[3 * i + 1], coord[3 * i + 2]));
                     }
                     dirichlet_bc[tag] = prescribed_condition;
@@ -92,15 +92,47 @@ double FEM3DVector::computeL2Error() {
         // get tags of nodes in current element
         std::vector<std::size_t> elementNodeTags = std::vector<std::size_t>(mesh.elems.nodeTags.begin() + i * mesh.elems.noNodesPerElement,
                                                                             mesh.elems.nodeTags.begin() + (i + 1) * mesh.elems.noNodesPerElement);
+        double det = mesh.elems.determinants[i];
 
         double integral = 0;
 
-        for (auto tag : elementNodeTags) {
+        // quadrature
+        for (int j = 0; j < mesh.elems.noIntegrationPoints; j++) {
+            // the exact solution at the integration point
+            std::vector<double> exact;
+            exact.reserve(3);
+
+            for (const auto &component : params3d_ -> exact_solution) {
+                exact.emplace_back(parseExpression(component, mesh.elems.globalCoord[i * mesh.elems.noNodesPerElement + 3 * j], mesh.elems.globalCoord[i * mesh.elems.noNodesPerElement + 3 * j + 1], mesh.elems.globalCoord[i * mesh.elems.noNodesPerElement + 3 * j + 2]));
+            }
+
+            // the approximate solution at the integration point
+            std::vector<double> approxSolution;
+            approxSolution.reserve(3);
+
+            for (int k = 0; k < mesh.elems.noNodesPerElement; k++) {
+                std::size_t tag = elementNodeTags[k];
+                int index = nodeIndexes[tag];
+
+                approxSolution[0] += displacements(3 * index) * mesh.elems.basisFunctionsValues[k * mesh.elems.noNodesPerElement + j];
+                approxSolution[1] += displacements(3 * index + 1) * mesh.elems.basisFunctionsValues[k * mesh.elems.noNodesPerElement + j];
+                approxSolution[2] += displacements(3 * index + 2) * mesh.elems.basisFunctionsValues[k * mesh.elems.noNodesPerElement + j];
+            }
+
+//            std::cout << mesh.elems.globalCoord[i * mesh.elems.noNodesPerElement + 3 * j] << ' ' << mesh.elems.globalCoord[i * mesh.elems.noNodesPerElement + 3 * j + 1] << ' ' << mesh.elems.globalCoord[i * mesh.elems.noNodesPerElement + 3 * j + 2] <<
+//                      ' ' << exact[0] << ' ' << exact[1] << ' ' << exact[2] << ' ' << app << '\n';
+
+
+            for (int t = 0; t < 3; t++) {
+                integral += mesh.elems.weights[j] * (exact[t] - approxSolution[t]) * (exact[t] - approxSolution[t]);
+            }
 
         }
+
+        result += det * integral;
     }
 
-    return 0;
+    return sqrt(result);
 }
 
 std::unordered_map<std::size_t, std::vector<double> > FEM3DVector::getDirichletBC() {

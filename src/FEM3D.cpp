@@ -3,21 +3,17 @@
 #include <gmsh.h>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
-#include <utility>
-#include "../include/exprtk/exprtk.hpp"
-#include "../include/Mesh.hpp"
-#include "../include/params.hpp"
 
 typedef exprtk::symbol_table<double> symbol_table_t;
 typedef exprtk::expression<double>   expression_t;
 typedef exprtk::parser<double>       parser_t;
 
-FEM3D::FEM3D(Params params) : params_(std::move(params)){
+FEM3D::FEM3D(std::shared_ptr<Params> const &params) : params_(params){
     Mesh msh;
     mesh = msh;
 }
 
-FEM3D::FEM3D(Params params, Mesh &msh) : params_(std::move(params)), mesh(msh) {
+FEM3D::FEM3D(std::shared_ptr<Params> const &params, Mesh &msh) : params_(params), mesh(msh) {
     symbol_table.add_variable("x", _x);
     symbol_table.add_variable("y", _y);
     symbol_table.add_variable("z", _z);
@@ -36,8 +32,8 @@ double FEM3D::parseExpression(const std::string &exp, double xx, double yy, doub
 
 int FEM3D::checkNodeSatisfiesBoundaryEquation(double nx, double ny, double nz) {
 
-    if (params_.dirichlet_bc.empty() != 1) {
-        int check_condition = int(parseExpression(params_.dirichlet_bc, nx, ny, nz));
+    if (params_ -> dirichlet_bc.empty() != 1) {
+        int check_condition = int(parseExpression(params_ -> dirichlet_bc, nx, ny, nz));
 
         if (check_condition == 1) {
             return 1;
@@ -63,10 +59,6 @@ void FEM3D::indexFreeNodes() {
 }
 
 // getters
-
-Params FEM3D::getParams() {
-    return params_;
-}
 
 std::unordered_map<std::size_t, int> FEM3D::getNodeIndexes() {
     return nodeIndexes;

@@ -6,10 +6,11 @@
 
 class LinearElasticity3D : public FEM3DVector {
 private:
-    const ParamsLE paramsLE_;
+    //const ParamsLE paramsLE_;
+    std::shared_ptr<ParamsLE> paramsLE_;
 public:
-    explicit LinearElasticity3D(const ParamsLE&);
-    LinearElasticity3D(const ParamsLE&, Mesh&);
+    explicit LinearElasticity3D(std::shared_ptr<ParamsLE> const&);
+    LinearElasticity3D(std::shared_ptr<ParamsLE> const&, Mesh&);
 
     void computeStiffnessMatrixAndLoadVector() override;
     void solveDisplacements() override;
