@@ -3,6 +3,7 @@
 
 #include <string>
 #include <memory>
+#include <set>
 #include <eigen3/Eigen/Dense>
 #include "params.hpp"
 
@@ -13,11 +14,19 @@ public:
         // store for each node [tag : coordinates]
         std::unordered_map<std::size_t, std::tuple<double, double, double> > node_coordinates = {};
 
+        // elements
         std::vector<int> elementTypes = {};
         std::vector<std::vector<std::size_t> > elemTags = {}, nTags = {};
         int elementType = -1;
         std::vector<std::size_t> elementTags = {};
         std::vector<std::size_t> nodeTags = {};
+        // faces
+        std::vector<std::size_t> facesVerticesTags = {};
+        // neumann boundary nodes
+        std::set<std::size_t> neumannBoundaryNodes = {};
+
+        // boundary
+        std::vector<std::pair<int, int> > boundary = {};
 
         // integration points
         std::vector<double> localCoord = {}, weights = {};
@@ -56,6 +65,7 @@ public:
     friend class LinearElasticity3D;
 
     void getNodesCoordinates();
+    //void getBoundaryTriangles();
     static void cubeMesh();
     void computeInverseJacobians();
     void initMesh();

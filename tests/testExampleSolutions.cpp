@@ -3,18 +3,32 @@
 #include "../include/utils.hpp"
 #include </opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3/Eigen/Dense>
 #include <memory>
+#include <vector>
 
 int main(int argc, char **argv) {
+    auto exact = [] (double x, double y, double z) {return std::vector<double>{x, y, z};};
+    auto grad = [] (double x, double y, double z) {
+        Eigen::Matrix3d grd;
+        grd << 1, 0, 0,
+                0, 1, 0,
+                0, 0, 1;
+        return grd;
+    };
+    auto f = [] (double x, double y, double z) {return std::vector<double>{0, 0, 0};};
+    auto g = [] (double x, double y, double z) {return std::vector<double>{x, y, z};};
+
     auto par = std::make_shared<ParamsLE>(ParamsLE{
             0.1, // h,
             10,
             1,
-            "0 == 0", // dirichlet BC
+            "z != 1", // dirichlet BC
+            "z == 1", // neumann BC
             3, // quadrature precision
             1, // order of lagrange polynomials
-            { "x", "y", "z" }, //exact
-            { "0", "0", "0" }, // f
-            { "x", "y", "z" }, // g
+            exact, // exact
+            grad, // solution gradient
+            f, // f
+            g, // g
             -1, // lambda
             -1, // mu
             0.34, // nu
@@ -52,9 +66,11 @@ int main(int argc, char **argv) {
     auto start = std::chrono::steady_clock::now();
 
     fem.computeStiffnessMatrixAndLoadVector();
-    fem.solveDisplacements();
 
     auto end = std::chrono::steady_clock::now();
+    fem.solveDisplacements();
+
+
     auto diff = end - start;
 
     std::cout << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
@@ -64,7 +80,14 @@ int main(int argc, char **argv) {
 
     std::cout << "Rows: " << sm.rows() << "; Cols: " << sm.cols() << "; Non-zero elements: " << sm.nonZeros() << '\n';
     std::cout << "Load Vector Size: " << lv.size() << '\n';
+
+    start = std::chrono::steady_clock::now();
     std::cout << "L2 error: " << fem.computeL2Error();
+    end = std::chrono::steady_clock::now();
+    diff = end - start;
+
+    std::cout << "\nL2: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
+
 
 
     fem.outputData("/Users/andrei/CLionProjects/FEM/outputs/out.txt");

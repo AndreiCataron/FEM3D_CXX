@@ -14,10 +14,6 @@ typedef exprtk::symbol_table<double> symbol_table_t;
 typedef exprtk::expression<double>   expression_t;
 typedef exprtk::parser<double>       parser_t;
 
-// todo-idea Possible Idea
-//  use actual functions for f, g etc and pass them as parameters
-//  instead of using parseExpression
-
 // todo-idea Integration on threads
 //   check below
 //   https://gitlab.onelab.info/gmsh/fem/-/blob/master/src/post/Integrate.cpp
@@ -61,6 +57,7 @@ public:
     void indexFreeNodes();
 
     virtual void setBoundaryConditions() = 0;
+    void setNeumannBoundaryConditions();
     // check if a node is on a part of the boundary where boundary conditions are imposed
     // return 0 if no bc are imposed, 1 for dirichlet, 2 for neumann
     int checkNodeSatisfiesBoundaryEquation(double, double, double);

@@ -10,13 +10,9 @@ FEM3DVector::FEM3DVector(std::shared_ptr<ParamsVector> const &params) : params3d
 FEM3DVector::FEM3DVector(std::shared_ptr<ParamsVector> const &params, Mesh &msh) : params3d_(params), FEM3D(params, msh){}
 
 void FEM3DVector::setBoundaryConditions() {
-    std::vector<std::pair<int, int> > domain_entity;
-    gmsh::model::getEntities(domain_entity, 3);
+    setNeumannBoundaryConditions();
 
-    std::vector<std::pair<int, int> > boundary;
-    gmsh::model::getBoundary(domain_entity, boundary, true, false, false);
-
-    for (auto b : boundary) {
+    for (auto b : mesh.elems.boundary) {
         std::vector<std::size_t> tags;
         std::vector<double> coord, param_coords;
         gmsh::model::mesh::getNodes(tags, coord, param_coords, b.first, b.second, true, false);
@@ -30,15 +26,12 @@ void FEM3DVector::setBoundaryConditions() {
                     std::vector<double> prescribed_condition;
                     prescribed_condition.reserve(3);
 
-                    for (const auto &cond : params3d_ -> g) {
-                        prescribed_condition.emplace_back(parseExpression(cond, coord[3 * i], coord[3 * i + 1], coord[3 * i + 2]));
-                    }
+                    prescribed_condition = params3d_ -> g(coord[3 * i], coord[3 * i + 1], coord[3 * i + 2]);
+
                     dirichlet_bc[tag] = prescribed_condition;
                 }
             }
-
             // add here other BC
-
         }
     }
 
@@ -103,11 +96,9 @@ double FEM3DVector::computeL2Error() {
             std::vector<double> exact;
             exact.reserve(3);
 
-            for (const auto &component: params3d_->exact_solution) {
-                exact.emplace_back(parseExpression(component, mesh.elems.globalCoord[i * mesh.elems.localCoord.size() + 3 * j],
-                                                              mesh.elems.globalCoord[i * mesh.elems.localCoord.size() + 3 * j + 1],
-                                                              mesh.elems.globalCoord[i * mesh.elems.localCoord.size() + 3 * j + 2]));
-            }
+            exact = params3d_ -> exact_solution(mesh.elems.globalCoord[i * mesh.elems.localCoord.size() + 3 * j],
+                                                mesh.elems.globalCoord[i * mesh.elems.localCoord.size() + 3 * j + 1],
+                                                mesh.elems.globalCoord[i * mesh.elems.localCoord.size() + 3 * j + 2]);
 
             // the approximate solution at the integration point
             std::vector<double> approxSolution = {0, 0, 0};

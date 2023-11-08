@@ -1,6 +1,7 @@
 #include "../include/FEM3D.hpp"
 
 #include <gmsh.h>
+#include <iostream>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
 
@@ -33,13 +34,40 @@ double FEM3D::parseExpression(const std::string &exp, double xx, double yy, doub
 int FEM3D::checkNodeSatisfiesBoundaryEquation(double nx, double ny, double nz) {
 
     if (params_ -> dirichlet_bc.empty() != 1) {
-        int check_condition = int(parseExpression(params_ -> dirichlet_bc, nx, ny, nz));
+        int check_dir = int(parseExpression(params_ -> dirichlet_bc, nx, ny, nz));
 
-        if (check_condition == 1) {
+        if (check_dir == 1) {
             return 1;
         }
     }
+    if (params_ -> neumann_bc.empty() != 1) {
+        int check_neu = int(parseExpression(params_ -> neumann_bc, nx, ny, nz));
+
+        if (check_neu == 1) {
+            return 2;
+        }
+    }
+
     return 0;
+}
+
+void FEM3D::setNeumannBoundaryConditions() {
+    for (auto b : mesh.elems.boundary) {
+        std::vector<std::size_t> tags;
+        std::vector<double> coord, param_coords;
+        gmsh::model::mesh::getNodes(tags, coord, param_coords, b.first, b.second, true, false);
+
+        for (int i = 0; i < tags.size(); i++) {
+            std::size_t tag = tags[i];
+            int bc = checkNodeSatisfiesBoundaryEquation(coord[3 * i], coord[3 * i + 1], coord[3 * i + 2]);
+
+            if (bc == 2) {
+                if (mesh.elems.neumannBoundaryNodes.contains(tag) == 0) {
+                    mesh.elems.neumannBoundaryNodes.insert(tag);
+                }
+            }
+        }
+    }
 }
 
 void FEM3D::indexFreeNodes() {

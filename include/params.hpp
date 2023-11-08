@@ -2,6 +2,7 @@
 #define FEM_PARAMS_HPP
 
 #include <string>
+#include <functional>
 
 struct Params{
     // mesh size
@@ -12,6 +13,8 @@ struct Params{
     unsigned int verbosity = 1;
     // equation of boundary surfaces where Dirichlet BC are imposed
     std::string dirichlet_bc;
+    // equation of boundary surfaces where Neumann BC are imposed
+    std::string neumann_bc;
     // Quadrature precision
     unsigned int quadrature_precision;
     // Order of Lagrange polynomials
@@ -19,9 +22,10 @@ struct Params{
 };
 
 struct ParamsVector : Params{
-    std::vector<std::string> exact_solution;
-    std::vector<std::string> f;
-    std::vector<std::string> g;
+    std::function<std::vector<double>(double, double, double)> exact_solution;
+    std::function<Eigen::Matrix3d(double, double, double)> solution_gradient;
+    std::function<std::vector<double>(double, double, double)> f;
+    std::function<std::vector<double>(double, double, double)> g;
 };
 
 struct ParamsLE : ParamsVector {

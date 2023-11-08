@@ -69,5 +69,46 @@ int main(int argc, char **argv) {
 //
 //    gmsh::finalize();
 //
+
+    gmsh::initialize(argc, argv);
+
+    gmsh::model::occ::addBox(0, 0, 0, 1, 1, 1, 1000);
+    gmsh::model::occ::synchronize();
+
+    gmsh::option::setNumber("Mesh.CharacteristicLengthMax", 0.3);
+    gmsh::option::setNumber("General.Verbosity", 1);
+
+    gmsh::model::mesh::generate(3);
+    gmsh::model::mesh::setOrder(1);
+    gmsh::option::setNumber("Mesh.NumSubEdges", 5);
+
+    std::vector<int> elementTypes;
+    std::vector<std::vector<std::size_t> > elementTags;
+    std::vector<std::vector<std::size_t> > nodeTags;
+    gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, 3);
+
+    std::cout << "\n Numar elemente: " << elementTags[0].size() << " ; numar noduri: " << nodeTags[0].size() << '\n';
+
+    std::vector<std::size_t> facesNodeTags;
+    gmsh::model::mesh::getElementFaceNodes(elementTypes[0], 3, facesNodeTags, -1, true);
+
+    std::cout << "Nr noduri pe fete: " << facesNodeTags.size() << '\n';
+
+    int k = 32;
+    std::size_t elemTag = elementTags[0][k];
+
+    int dim, tag;
+    std::vector<std::size_t> elementNodes;
+    gmsh::model::mesh::getElement(elemTag, elementTypes[0], elementNodes, dim, tag);
+    std::cout << "\n" << dim << ' ' << tag << '\n';
+    for(auto i : elementNodes) std::cout << i << " ";
+    std::cout << '\n';
+
+    std::vector<std::size_t> elemfacenodes = std::vector(facesNodeTags.begin() + 12 * k, facesNodeTags.begin() + 12 * k + 12);
+    for (auto i : elemfacenodes) std::cout << i << " ";
+
+
+    gmsh::finalize();
+
     return 0;
 }

@@ -1,6 +1,7 @@
 #include "../include/LinearElasticity3D.hpp"
 #include "../include/utils.hpp"
 #include <iostream>
+#include <set>
 #include <gmsh.h>
 #include <eigen3/Eigen/IterativeLinearSolvers>
 
@@ -122,8 +123,8 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
         for (const auto& tag : elementNodeTags) {
             std::tuple<double, double, double> nodeCoord = mesh.elems.node_coordinates[tag];
 
-            for (const auto& component : paramsLE_ -> f) {
-                fk.emplace_back(parseExpression(component, std::get<0>(nodeCoord), std::get<1>(nodeCoord), std::get<2>(nodeCoord)));
+            for (auto component : paramsLE_ -> f(std::get<0>(nodeCoord), std::get<1>(nodeCoord), std::get<2>(nodeCoord))) {
+                fk.emplace_back(component);
             }
         }
 
@@ -133,6 +134,18 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
         Eigen::VectorXd localLoad = elementMass * fkConverted;
 
         load_vector(elementNodeIndexes) += localLoad;
+
+        // neumann contribution
+
+        std::set<std::size_t> elementNodeTagsAsSet(elementNodeTags.begin(), elementNodeTags.end());
+        std::set<std::size_t> intersection;
+        std::set_intersection(elementNodeTagsAsSet.begin(), elementNodeTagsAsSet.end(),
+                              mesh.elems.neumannBoundaryNodes.begin(), mesh.elems.neumannBoundaryNodes.end(),
+                              std::inserter(intersection, intersection.begin()));
+
+        if (intersection.size() >= 3) {
+            ;
+        }
     }
 
     stiffness_matrix.setFromTriplets(tripletList.begin(), tripletList.end());

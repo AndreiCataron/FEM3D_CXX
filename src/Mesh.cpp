@@ -106,6 +106,15 @@ void Mesh::initMesh() {
     // node tags
     elems.nodeTags = elems.nTags[0];
 
+    // get vertices of tetrahedron on faces
+    gmsh::model::mesh::getElementFaceNodes(elems.elementType, 3, elems.facesVerticesTags, -1, true);
+
+    // get boundary
+    std::vector<std::pair<int, int> > domain_entity;
+    gmsh::model::getEntities(domain_entity, 3);
+
+    gmsh::model::getBoundary(domain_entity, elems.boundary, true, false, false);
+
     // get integration points
     std::string intRule = "Gauss" + std::to_string(params -> quadrature_precision);
 
