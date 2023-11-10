@@ -35,3 +35,17 @@ void utils::checkParamsLE(ParamsLE &params) {
     }
 }
 
+void utils::generateCombinations(std::vector<std::vector<int> > &res, int n, int k) {
+    std::vector<bool> v(n);
+    std::fill(v.end() - k, v.end(), true);
+
+    do {
+        std::vector<int> temp;
+        for (int i = 0; i < n; ++i) {
+            if (v[i]) {
+                temp.emplace_back(i);
+            }
+        }
+        res.emplace_back(temp);
+    } while (std::next_permutation(v.begin(), v.end()));
+}

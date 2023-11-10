@@ -76,7 +76,9 @@ int main() {
 //    std::cout << '\n' << model2.x << ' ' << model2.y;
 //
 //    std::cout << model.x;
-    E obj(2);
-    D &ref = obj;
-    ref.printsth();
+//    E obj(2);
+//    D &ref = obj;
+//    ref.printsth();
+
+
 }

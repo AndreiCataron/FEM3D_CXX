@@ -144,7 +144,24 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
                               std::inserter(intersection, intersection.begin()));
 
         if (intersection.size() >= 3) {
-            ;
+            std::vector<std::vector<int> > combinations = {};
+            utils::generateCombinations(combinations, int(intersection.size()), 3);
+
+            // loop through boundary faces
+            for (auto comb : combinations) {
+                // get vertices on current boundary face
+                std::set<std::size_t> vertices = {*next(intersection.begin(), comb[0]), *next(intersection.begin(), comb[1]), *next(intersection.begin(), comb[2])};
+
+                // get coords of vertices
+                std::vector<std::tuple<double, double, double> > verticesCoord;
+                verticesCoord.reserve(3);
+
+                for (auto tag : vertices) {
+                    verticesCoord.emplace_back(mesh.elems.node_coordinates[tag]);
+                }
+
+                double integral = 0;
+            }
         }
     }
 

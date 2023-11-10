@@ -11,6 +11,8 @@ namespace utils {
 
     void checkParamsLE(ParamsLE&);
 
+    void generateCombinations(std::vector<std::vector<int> >&, int, int);
+
     template <typename T> void deleteDuplicatesFromVector(std::vector<T> &vec) {
         std::sort(vec.begin(), vec.end());
         vec.erase(std::unique(vec.begin(), vec.end()), vec.end());
