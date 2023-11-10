@@ -21,8 +21,8 @@ int main(int argc, char **argv) {
             0.1, // h,
             10,
             1,
-            "z != 1", // dirichlet BC
-            "z == 1", // neumann BC
+            "z != 0", // dirichlet BC
+            "z == 0", // neumann BC
             3, // quadrature precision
             1, // order of lagrange polynomials
             exact, // exact
@@ -34,21 +34,6 @@ int main(int argc, char **argv) {
             0.34, // nu
             12.864 // E
     });
-
-//    ParamsLE par2 = {
-//            0.1, // h
-//            10,
-//            1,
-//            "0 == 0",
-//            1,
-//            1,
-//            {"-1.9831", "-1.9831", "50.016"},
-//            {"x * z + 1 / 56 * x ^ 2", "y * z + 1 / 56 * y ^ 2", "- z ^ 2 + 1 / 56 * z ^ 2"},
-//            56,
-//            36,
-//            -1,
-//            -1
-//    };
 
     utils::checkParamsLE(*par);
 

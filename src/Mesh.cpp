@@ -115,6 +115,16 @@ void Mesh::initMesh() {
 
     gmsh::model::getBoundary(domain_entity, elems.boundary, true, false, false);
 
+    for (auto b : elems.boundary) {
+        std::vector<std::size_t> tags;
+        std::vector<double> coord, param_coords;
+        gmsh::model::mesh::getNodes(tags, coord, param_coords, b.first, b.second, true, false);
+
+        for (auto tag : tags) {
+            elems.boundaryTags[tag] = b.second;
+        }
+    }
+
     // get integration points
     std::string intRule = "Gauss" + std::to_string(params -> quadrature_precision);
 

@@ -13,6 +13,8 @@ public:
     struct MeshElements {
         // store for each node [tag : coordinates]
         std::unordered_map<std::size_t, std::tuple<double, double, double> > node_coordinates = {};
+        // store for each node on the boundary the tag of the respective boundary surface
+        std::unordered_map<std::size_t, std::size_t> boundaryTags = {};
 
         // elements
         std::vector<int> elementTypes = {};

@@ -9,6 +9,29 @@ LinearElasticity3D::LinearElasticity3D(std::shared_ptr<ParamsLE> const &params) 
 
 LinearElasticity3D::LinearElasticity3D(std::shared_ptr<ParamsLE> const &params, Mesh &msh) : paramsLE_(params), FEM3DVector(params, msh) {}
 
+Eigen::Vector3d LinearElasticity3D::h(std::vector<double> coord, const int tag) {
+    // compute strain tensor
+    double x = coord[0], y = coord[1], z = coord[2];
+    Eigen::Matrix3d strain = 0.5 * paramsLE_ -> solution_gradient(x, y, z) * (paramsLE_ -> solution_gradient(x, y, z)).transpose();
+
+    // compute stress tensor
+    Eigen::Matrix3d identity = Eigen::Matrix3d::Identity();
+    Eigen::Matrix3d stress = (paramsLE_ -> E) / (1 + paramsLE_ -> nu) * (strain + (paramsLE_ -> nu) / (1 - 2 * paramsLE_ -> nu) * strain.trace() * identity);
+
+    // get normal
+    std::vector<double> parametricCoord, normal;
+    gmsh::model::getParametrization(2, tag, coord, parametricCoord);
+
+    gmsh::model::getNormal(tag, parametricCoord, normal);
+
+    // convert normal to Eigen::Vector3d
+    double *ptr = &normal[0];
+    Eigen::Map<Eigen::Vector3d> normalConverted(ptr, 3);
+    std::cout << normalConverted << '\n';
+
+    return stress * normalConverted;
+}
+
 void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
     // initialize D matrix
     Eigen::MatrixXd D(6, 6);
@@ -153,14 +176,17 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
                 std::set<std::size_t> vertices = {*next(intersection.begin(), comb[0]), *next(intersection.begin(), comb[1]), *next(intersection.begin(), comb[2])};
 
                 // get coords of vertices
-                std::vector<std::tuple<double, double, double> > verticesCoord;
+                std::vector<std::vector<double> > verticesCoord;
                 verticesCoord.reserve(3);
 
                 for (auto tag : vertices) {
-                    verticesCoord.emplace_back(mesh.elems.node_coordinates[tag]);
+                    std::tuple<double, double, double> c = mesh.elems.node_coordinates[tag];
+                    verticesCoord.emplace_back(std::vector<double>{std::get<0>(c), std::get<1>(c), std::get<2>(c)});
                 }
 
                 double integral = 0;
+
+                Eigen::Vector3d rez = h(verticesCoord[0], mesh.elems.boundaryTags[*vertices.begin()]);
             }
         }
     }

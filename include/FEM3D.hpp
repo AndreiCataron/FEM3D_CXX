@@ -18,6 +18,10 @@ typedef exprtk::parser<double>       parser_t;
 //   check below
 //   https://gitlab.onelab.info/gmsh/fem/-/blob/master/src/post/Integrate.cpp
 
+// todo-idea Move boundary node information to Mesh class
+//   am 3 locuri in care fac acelasi for (auto b : boundary)
+//   super rau !!!
+
 class FEM3D{
 private:
     // struct of parameters

@@ -6,12 +6,15 @@
 
 class LinearElasticity3D : public FEM3DVector {
 private:
-    //const ParamsLE paramsLE_;
+    // ParamsLE paramsLE_;
     std::shared_ptr<ParamsLE> paramsLE_;
+    // neumann boundary condition
+    //std::function<Eigen::Vector3d(double, double, double)> h;
 public:
     explicit LinearElasticity3D(std::shared_ptr<ParamsLE> const&);
     LinearElasticity3D(std::shared_ptr<ParamsLE> const&, Mesh&);
 
+    Eigen::Vector3d h(std::vector<double>, int);
     void computeStiffnessMatrixAndLoadVector() override;
     void solveDisplacements() override;
 };
