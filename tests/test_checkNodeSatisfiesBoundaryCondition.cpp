@@ -1,12 +1,3 @@
-#include <iostream>
-#include <cassert>
-#include "../include/FEM3D.hpp"
-#include "../include/FEM3Dvector.hpp"
-#include "../include/LinearElasticity3D.hpp"
-#include "../include/utils.hpp"
-#include "../include/Mesh.hpp"
-#include "../include/params.hpp"
-
 int main(int argc, char **argv) {
 //    ParamsLE par2 = {
 //            0.1, // h

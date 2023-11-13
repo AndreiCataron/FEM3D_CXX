@@ -27,7 +27,6 @@ Eigen::Vector3d LinearElasticity3D::h(std::vector<double> coord, const int tag) 
     // convert normal to Eigen::Vector3d
     double *ptr = &normal[0];
     Eigen::Map<Eigen::Vector3d> normalConverted(ptr, 3);
-    std::cout << normalConverted << '\n';
 
     return stress * normalConverted;
 }
@@ -186,7 +185,8 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
 
                 double integral = 0;
 
-                Eigen::Vector3d rez = h(verticesCoord[0], mesh.elems.boundaryTags[*vertices.begin()]);
+
+                //Eigen::Vector3d rez = h(verticesCoord[0], int(mesh.elems.boundaryTriangles[vertices]));
             }
         }
     }

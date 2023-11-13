@@ -3,6 +3,7 @@
 #include "../include/utils.hpp"
 #include </opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3/Eigen/Dense>
 #include <memory>
+#include <gmsh.h>
 #include <vector>
 
 int main(int argc, char **argv) {
@@ -24,6 +25,7 @@ int main(int argc, char **argv) {
             "z != 0", // dirichlet BC
             "z == 0", // neumann BC
             3, // quadrature precision
+            2, // triangle quadrature precision
             1, // order of lagrange polynomials
             exact, // exact
             grad, // solution gradient
@@ -76,9 +78,9 @@ int main(int argc, char **argv) {
 
 
     fem.outputData("/Users/andrei/CLionProjects/FEM/outputs/out.txt");
-//
+
 //    std::set<std::string> args(argv, argv + argc);
 //    if(!args.count("-nopopup")) gmsh::fltk::run();
-//
+
 
 }

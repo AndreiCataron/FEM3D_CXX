@@ -1,7 +1,8 @@
 #include "../include/utils.hpp"
 #include <cmath>
+#include <iostream>
 
-int utils::binom(int n, int k) {
+int utils::binomialCoefficient(int n, int k) {
     double coefficient = std::tgamma(n + 1) / (std::tgamma(k + 1) * std::tgamma(n - k + 1));
     return int(coefficient);
 }
@@ -30,7 +31,7 @@ void utils::checkParamsLE(ParamsLE &params) {
     }
 
     if (params.E < 0) {
-        // set E to aluminimum E
+        // set E to aluminium E
         params.E = 68;
     }
 }
@@ -48,4 +49,24 @@ void utils::generateCombinations(std::vector<std::vector<int> > &res, int n, int
         }
         res.emplace_back(temp);
     } while (std::next_permutation(v.begin(), v.end()));
+}
+
+std::vector<double> utils::midpoint(std::vector<double> &p1, std::vector<double> &p2) {
+    try {
+        if (p1.size() == p2.size()) {
+            std::vector<double> mid;
+            mid.reserve(p1.size());
+            for (int i = 0; i < p1.size(); i++) {
+                mid.emplace_back((p1[i] + p2[i]) / 2);
+            }
+            return mid;
+        }
+        else {
+            throw std::runtime_error("The points must have the same length");
+        }
+    }
+    catch(std::exception const &e) {
+        std::cout << "Runtime error: " << e.what() << '\n';
+    }
+    return {};
 }

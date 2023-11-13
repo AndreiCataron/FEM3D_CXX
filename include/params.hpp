@@ -3,6 +3,8 @@
 
 #include <string>
 #include <functional>
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Sparse>
 
 struct Params{
     // mesh size
@@ -17,6 +19,8 @@ struct Params{
     std::string neumann_bc;
     // Quadrature precision
     unsigned int quadrature_precision;
+    // Quadrature precision on triangles
+    unsigned int triangle_quadrature_precision;
     // Order of Lagrange polynomials
     int element_order;
 };

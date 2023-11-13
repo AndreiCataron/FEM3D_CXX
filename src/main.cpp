@@ -36,7 +36,7 @@ using Eigen::MatrixXd;
 
 int main(int argc, char **argv) {
 
-    std::cout << utils::binom(2, 3);
+    std::cout << utils::binomialCoefficient(2, 3);
 
     MatrixXd m(2,2);
     m(0,0) = 3;
