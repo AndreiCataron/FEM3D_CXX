@@ -53,6 +53,20 @@ int FEM3D::checkNodeSatisfiesBoundaryEquation(double nx, double ny, double nz) {
 
 void FEM3D::setNeumannBoundaryConditions() {
     for (auto b : mesh.elems.boundary) {
+        std::vector<int> elementTypes;
+        std::vector<std::vector<std::size_t> > elementTags, nodeTags;
+        gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, b.first, b.second);
+
+        for (int i = 0; i < elementTags[0].size(); i++) {
+            std::size_t triangleTag = elementTags[0][i];
+            std::vector<std::size_t> faceNodeTags = std::vector<std::size_t>(mesh.elems.nodeTags.begin() + i * mesh.elems.noNodesPerTriangle,
+                                                                             mesh.elems.nodeTags.begin() + (i + 1) * mesh.elems.noNodesPerTriangle);
+
+            for (auto tag : faceNodeTags) {
+                std::tuple<double, double, double> coord = mesh.elems.node_coordinates[tag];
+            }
+        }
+
         std::vector<std::size_t> tags;
         std::vector<double> coord, param_coords;
         gmsh::model::mesh::getNodes(tags, coord, param_coords, b.first, b.second, true, false);
@@ -62,9 +76,9 @@ void FEM3D::setNeumannBoundaryConditions() {
             int bc = checkNodeSatisfiesBoundaryEquation(coord[3 * i], coord[3 * i + 1], coord[3 * i + 2]);
 
             if (bc == 2) {
-                if (mesh.elems.neumannBoundaryNodes.contains(tag) == 0) {
-                    mesh.elems.neumannBoundaryNodes.insert(tag);
-                }
+//                if (mesh.elems.neumannBoundaryNodes.contains(tag) == 0) {
+//                    mesh.elems.neumannBoundaryNodes.insert(tag);
+//                }
             }
         }
     }

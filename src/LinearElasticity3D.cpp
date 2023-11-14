@@ -157,39 +157,103 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
 
         load_vector(elementNodeIndexes) += localLoad;
 
-        // neumann contribution
+//        // neumann contribution
+//
+//        // get tags of tetrahedron faces
+//        std::vector<std::size_t> facesTags = mesh.elems.tetrahedronToFaces[mesh.elems.elementTags[i]];
+//        for (auto faceTag : facesTags) {
+//            if (mesh.elems.boundaryTriangles.find(faceTag) != mesh.elems.boundaryTriangles.end()) {
+//                // find index of face in mesh.elems.faceTags
+//                auto it = std::find(mesh.elems.faceTags.begin(), mesh.elems.faceTags.end(), faceTag);
+//                int index = int(it - mesh.elems.faceTags.begin());
+//
+//                // compute integral of h * phi for all basis functions
+//                for (int k = 0; k < mesh.elems.noNodesPerTriangle; k++) {
+//                    Eigen::Vector3d integral = Eigen::Vector3d::Zero();
+//
+//                    for (int j = 0; j < mesh.elems.triangleNoIntegrationPoints; j++) {
+//                        std::vector<double> coord(
+//                                mesh.elems.trianglesGlobalCoord.begin() + index * 3 * mesh.elems.noIntegrationPoints +
+//                                3 * j,
+//                                mesh.elems.trianglesGlobalCoord.begin() + index * 3 * mesh.elems.noIntegrationPoints +
+//                                3 * j + 3);
+//
+//                        integral += mesh.elems.triangleWeights[j] * h(coord, int(mesh.elems.boundaryTriangles[faceTag])) *
+//                                mesh.elems.triangleBasisFunctionsValues[k * mesh.elems.noNodesPerTriangle + j];
+//                    }
+//
+//                    integral *= mesh.elems.trianglesDeterminants[index];
+//                }
+//            }
+//        }
 
-        std::set<std::size_t> elementNodeTagsAsSet(elementNodeTags.begin(), elementNodeTags.end());
-        std::set<std::size_t> intersection;
-        std::set_intersection(elementNodeTagsAsSet.begin(), elementNodeTagsAsSet.end(),
-                              mesh.elems.neumannBoundaryNodes.begin(), mesh.elems.neumannBoundaryNodes.end(),
-                              std::inserter(intersection, intersection.begin()));
-
-        if (intersection.size() >= 3) {
-            std::vector<std::vector<int> > combinations = {};
-            utils::generateCombinations(combinations, int(intersection.size()), 3);
-
-            // loop through boundary faces
-            for (auto comb : combinations) {
-                // get vertices on current boundary face
-                std::set<std::size_t> vertices = {*next(intersection.begin(), comb[0]), *next(intersection.begin(), comb[1]), *next(intersection.begin(), comb[2])};
-
-                // get coords of vertices
-                std::vector<std::vector<double> > verticesCoord;
-                verticesCoord.reserve(3);
-
-                for (auto tag : vertices) {
-                    std::tuple<double, double, double> c = mesh.elems.node_coordinates[tag];
-                    verticesCoord.emplace_back(std::vector<double>{std::get<0>(c), std::get<1>(c), std::get<2>(c)});
-                }
-
-                double integral = 0;
-
-
-                //Eigen::Vector3d rez = h(verticesCoord[0], int(mesh.elems.boundaryTriangles[vertices]));
-            }
-        }
+//        std::set<std::size_t> elementNodeTagsAsSet(elementNodeTags.begin(), elementNodeTags.end());
+//        std::set<std::size_t> intersection;
+//        std::set_intersection(elementNodeTagsAsSet.begin(), elementNodeTagsAsSet.end(),
+//                              mesh.elems.neumannBoundaryNodes.begin(), mesh.elems.neumannBoundaryNodes.end(),
+//                              std::inserter(intersection, intersection.begin()));
+//
+//        if (intersection.size() >= 3) {
+//            std::vector<std::vector<int> > combinations = {};
+//            utils::generateCombinations(combinations, int(intersection.size()), 3);
+//
+//            // loop through boundary faces
+//            for (auto comb : combinations) {
+//                // get vertices on current boundary face
+//                std::set<std::size_t> vertices = {*next(intersection.begin(), comb[0]), *next(intersection.begin(), comb[1]), *next(intersection.begin(), comb[2])};
+//
+//                // get coords of vertices
+//                std::vector<std::vector<double> > verticesCoord;
+//                verticesCoord.reserve(3);
+//
+//                for (auto tag : vertices) {
+//                    std::tuple<double, double, double> c = mesh.elems.node_coordinates[tag];
+//                    verticesCoord.emplace_back(std::vector<double>{std::get<0>(c), std::get<1>(c), std::get<2>(c)});
+//                }
+//
+//                double integral = 0;
+//
+//
+//                //Eigen::Vector3d rez = h(verticesCoord[0], int(mesh.elems.boundaryTriangles[vertices]));
+//            }
+//        }
     }
+//
+//    // loop through boundary faces to compute neumann contribution to load vector
+//    for (auto b : mesh.elems.boundary) {
+//
+//    }
+//
+//
+//    for (int i = 0; i < mesh.elems.faceTags.size(); i++) {
+//        // check if face is on boundary
+//        std::size_t faceTag = mesh.elems.faceTags[i];
+//        if (mesh.elems.boundaryTriangles.find(faceTag) != mesh.elems.boundaryTriangles.end()) {
+//            std::vector<std::size_t> faceNodeTags = std::vector<std::size_t>(mesh.elems.faceNodes.begin() + i * mesh.elems.noNodesPerTriangle,
+//                                                                             mesh.elems.faceNodes.begin() + (i + 1) * mesh.elems.noNodesPerTriangle);
+//
+//            // compute integral of h * phi for all basis functions
+//            for (int k = 0; k < mesh.elems.noNodesPerTriangle; k++) {
+//                Eigen::Vector3d integral = Eigen::Vector3d::Zero();
+//
+//                for (int j = 0; j < mesh.elems.triangleNoIntegrationPoints; j++) {
+//                    std::vector<double> coord(
+//                            mesh.elems.trianglesGlobalCoord.begin() + i * 3 * mesh.elems.noIntegrationPoints + 3 * j,
+//                            mesh.elems.trianglesGlobalCoord.begin() + i * 3 * mesh.elems.noIntegrationPoints + 3 * j + 3);
+//
+//                    integral += mesh.elems.triangleWeights[j] * h(coord, int(mesh.elems.boundaryTriangles[faceTag])) *
+//                            mesh.elems.triangleBasisFunctionsValues[k * mesh.elems.noNodesPerTriangle + j];
+//                }
+//
+//                integral *= mesh.elems.trianglesDeterminants[i];
+//
+//                int index = nodeIndexes[faceNodeTags[k]];
+//                std::vector<int> nodeIndexes = {3 * index, 3 * index + 1, 3 * index + 2};
+//
+//                load_vector(nodeIndexes) += integral;
+//            }
+//        }
+//    }
 
     stiffness_matrix.setFromTriplets(tripletList.begin(), tripletList.end());
 

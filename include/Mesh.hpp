@@ -24,21 +24,12 @@ public:
         std::vector<std::size_t> elementTags = {};
         std::vector<std::size_t> nodeTags = {};
 
-        // faces
-        int triangleType = -1;
-        std::vector<std::size_t> faceNodes = {};
-        std::vector<std::size_t> faceTags = {};
-        std::vector<int> faceOrientations = {};
-        // identify for each triplet of nodes the corresponding face
-        std::unordered_map<std::set<std::size_t>, std::size_t, MyHash> nodesToFaces = {};
-        // face tags for each tetrahedron
-        std::unordered_map<std::size_t, std::vector<std::size_t> > tetrahedronToFaces = {};
         // faces integration points
         std::vector<double> triangleLocalCoord = {}, triangleWeights = {};
         int triangleNoIntegrationPoints = -1;
-
-        // neumann boundary nodes
-        std::set<std::size_t> neumannBoundaryNodes = {};
+        // basis functions values at triangleLocalCoord
+        std::vector<double> triangleBasisFunctionsValues = {};
+        int noNodesPerTriangle = -1;
 
         // boundary
         std::vector<std::pair<int, int> > boundary = {};
@@ -56,6 +47,9 @@ public:
         std::vector<double> jacobians = {}, determinants = {}, globalCoord = {};
         // inverse jacobians
         std::vector<Eigen::MatrixXd> inverse_jacobians;
+
+        // boundary triangles jacobians
+        std::vector<double> trianglesDeterminants = {}, trianglesGlobalCoord = {};
     };
 
 public:

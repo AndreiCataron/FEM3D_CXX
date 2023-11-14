@@ -42,6 +42,9 @@ protected:
     std::vector<int> constrainedNodes;
     // indexes of free nodes
     std::vector<int> freeNodes;
+    // faces where neumann boundary conditions are imposed
+    std::vector<std::size_t> neumannFaceNodes = {};
+    std::vector<std::size_t> neumannFaceTags = {};
     // stiffness matrix
     Eigen::SparseMatrix<double> stiffness_matrix;
     // load vector

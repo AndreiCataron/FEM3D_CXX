@@ -108,28 +108,6 @@ void Mesh::initMesh() {
 
     // create faces
     gmsh::model::mesh::createFaces();
-    // get vertices of faces of tetrahedrons
-    gmsh::model::mesh::getElementFaceNodes(elems.elementType, 3, elems.faceNodes, -1, true);
-    // get face tags
-    gmsh::model::mesh::getFaces(3, elems.faceNodes, elems.faceTags, elems.faceOrientations);
-    // fill nodesToFaces
-    for (int i = 0; i < elems.faceTags.size(); i++) {
-        std::set<std::size_t> nodes(elems.faceNodes.begin() + 3 * i, elems.faceNodes.begin() + 3 * (i + 1));
-        elems.nodesToFaces[nodes] = elems.faceTags[i];
-    }
-
-    // identify faces for each element
-    for (int i = 0; i < elems.elementTags.size(); i++) {
-        std::vector<std::size_t> faces(elems.faceTags.begin() + 4 * i, elems.faceTags.begin() + 4 * (i + 1));
-        std::size_t tag = elems.elementTags[i];
-        auto it = elems.tetrahedronToFaces.find(tag);
-        if( it != elems.tetrahedronToFaces.end() ) {
-            it->second = faces;
-        }
-        else {
-            elems.tetrahedronToFaces.insert(std::make_pair(tag, faces));
-        }
-    }
 
     // get boundary
     std::vector<std::pair<int, int> > domain_entity;
@@ -137,23 +115,10 @@ void Mesh::initMesh() {
 
     gmsh::model::getBoundary(domain_entity, elems.boundary, true, false, false);
 
-    for (auto b : elems.boundary) {
-        std::vector<int> elementTypes;
-        std::vector<std::vector<std::size_t> > elementTags, nodeTags;
-        gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, b.first, b.second);
-        if (elems.triangleType == -1) {
-            elems.triangleType = elementTypes[0];
-        }
-
-        for (auto i : elementTags[0]) {
-            elems.boundaryTriangles[i] = b.second;
-        }
-
-    }
     // get integration points for triangles
     std::string triangleIntRule = "Gauss" + std::to_string(params -> triangle_quadrature_precision);
 
-    gmsh::model::mesh::getIntegrationPoints(elems.triangleType, triangleIntRule, elems.triangleLocalCoord, elems.triangleWeights);
+    gmsh::model::mesh::getIntegrationPoints(2, triangleIntRule, elems.triangleLocalCoord, elems.triangleWeights);
     elems.triangleNoIntegrationPoints = int(elems.triangleLocalCoord.size() / 3);
 
     // get integration points for tetrahedrons
@@ -167,13 +132,25 @@ void Mesh::initMesh() {
     int numOrient, numComp;
 
     gmsh::model::mesh::getBasisFunctions(elems.elementType, elems.localCoord, functionSpaceType, numComp, elems.basisFunctionsValues, numOrient);
+    // get basis function values at triangle integration points
+    gmsh::model::mesh::getBasisFunctions(2, elems.triangleLocalCoord, functionSpaceType, numComp, elems.triangleBasisFunctionsValues, numOrient);
 
-    elems.noNodesPerElement = utils::binomialCoefficient(int(params->element_order) + 3, 3);
+    elems.noNodesPerElement = utils::binomialCoefficient(int(params -> element_order) + 3, 3);
+    elems.noNodesPerTriangle = utils::binomialCoefficient(int(params -> element_order) + 2, 2);
 
     // get gradients at integration points
     functionSpaceType = "GradLagrange" + std::to_string(params -> element_order);
 
     gmsh::model::mesh::getBasisFunctions(elems.elementType, elems.localCoord, functionSpaceType, numComp, elems.basisFunctionsGradients, numOrient);
+
+    // get jacobians of triangles
+    std::vector<double> triangleJacobianCoords = {0.25, 0.25, 0}, triangleDeterminants, triangleJacobians, triangleGlobalCoords;
+    gmsh::model::mesh::getJacobians(2, triangleJacobianCoords, triangleJacobians, elems.trianglesDeterminants, triangleGlobalCoords);
+    gmsh::model::mesh::getJacobians(2, elems.triangleLocalCoord, triangleJacobians, triangleDeterminants, elems.trianglesGlobalCoord);
+
+//    std::cout << elems.cornerFaceNodes.size() << ' ' << elems.faceNodes.size() << ' ' << elems.elementTags.size() << '\n' <<
+//    elems.trianglesDeterminants.size() << '\n';
+
 
     // get the determinant of the jacobian of each element
     // todo-idea Modification

@@ -13,9 +13,6 @@ private:
 protected:
     // store for each node on the boundary [tag : dirichlet bc]
     std::unordered_map<std::size_t, std::vector<double> > dirichlet_bc;
-    // store for each node on the boundary [tag : satisfies neumann boundary equation]
-    // temporary
-    std::unordered_map<std::size_t, bool> neumann_bc;
 
 public:
     explicit FEM3DVector(std::shared_ptr<ParamsVector> const&);
