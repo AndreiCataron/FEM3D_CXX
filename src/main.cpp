@@ -1,159 +1,86 @@
 #include <iostream>
-
-#include <set>
-
-#include "exprtk.hpp"
-
-#include <gmsh.h>
-#include <set>
-#include <cmath>
-#include <algorithm>
-
-#include "../include/FEM3D.hpp"
-
-
-#include <eigen3/Eigen/Dense>
-
+#include "../include/LinearElasticity3D.hpp"
 #include "../include/utils.hpp"
-
-void print_entities(std::vector<std::pair<int, int> > entities) {
-    for(auto e : entities){
-        int s = e.second;
-
-        std::vector<std::size_t> tags;
-        std::vector<double> coord, param;
-        gmsh::model::mesh::getNodes(tags, coord, param, 2, s, true);
-
-        for(auto i : tags){
-            std::cout << i << " ";
-        }
-        std::cout << std::endl;
-
-    }
-}
-
-using Eigen::MatrixXd;
+#include </opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3/Eigen/Dense>
+#include <memory>
+#include <gmsh.h>
+#include <vector>
 
 int main(int argc, char **argv) {
+    auto exact = [] (double x, double y, double z) {return std::vector<double>{x, y, z};};
+    auto grad = [] (double x, double y, double z) {
+        Eigen::Matrix3d grd;
+        grd << 1, 0, 0,
+                0, 1, 0,
+                0, 0, 1;
+        return grd;
+    };
+    auto f = [] (double x, double y, double z) {return std::vector<double>{0, 0, 0};};
+    auto g = [] (double x, double y, double z) {return std::vector<double>{x, y, z};};
 
-    std::cout << utils::binomialCoefficient(2, 3);
+    auto par = std::make_shared<ParamsLE>(ParamsLE{
+            0.05, // h,
+            10,
+            1,
+            "z > 0", // dirichlet BC
+            "z == 0", // neumann BC
+            3, // quadrature precision
+            2, // triangle quadrature precision
+            1, // order of lagrange polynomials
+            exact, // exact
+            grad, // solution gradient
+            f, // f
+            g, // g
+            -1, // lambda
+            -1, // mu
+            0.33, // nu
+            70.0 // E
+    });
 
-    MatrixXd m(2,2);
-    m(0,0) = 3;
-    m(1,0) = 2.5;
-    m(0,1) = -1;
-    m(1,1) = m(1,0) + m(0,1);
-    std::cout << m << std::endl;
+    utils::checkParamsLE(*par);
 
+    std::cout << "Salut " << par -> mu << '\n';
+
+
+    Mesh msh(argc, argv, par);
+
+    Mesh::cubeMesh();
+    msh.initMesh();
+
+    LinearElasticity3D fem(par, msh);
+
+    fem.setBoundaryConditions();
     auto start = std::chrono::steady_clock::now();
 
-    typedef exprtk::symbol_table<double> symbol_table_t;
-    typedef exprtk::expression<double>   expression_t;
-    typedef exprtk::parser<double>       parser_t;
-
-    const std::string expression_string =
-            "x + y == 4";
-
-    double x, y;
-
-    symbol_table_t symbol_table;
-    symbol_table.add_variable("x",x);
-    symbol_table.add_variable("y", y);
-    symbol_table.add_constants();
-
-    expression_t expression;
-    expression.register_symbol_table(symbol_table);
-
-    parser_t parser;
-    parser.compile(expression_string,expression);
-
-    x = double(1.00000000000000000001);
-    y = double(3);
-    double z = expression.value();
-    std::cout << z << std::endl;
+    fem.computeStiffnessMatrixAndLoadVector();
 
     auto end = std::chrono::steady_clock::now();
+
+    fem.solveDirectProblem();
+
     auto diff = end - start;
 
-    std::cout << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
+    std::cout << "Stiff:" << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
 
-    gmsh::initialize(argc, argv);
+    Eigen::SparseMatrix<double> sm = fem.getStiffnessMatrix();
+    Eigen::VectorXd lv = fem.getLoadVector();
+
+    std::cout << "Rows: " << sm.rows() << "; Cols: " << sm.cols() << "; Non-zero elements: " << sm.nonZeros() << '\n';
+    std::cout << "Load Vector Size: " << lv.size() << '\n';
 
     start = std::chrono::steady_clock::now();
-
-    gmsh::model::occ::addBox(0, 0, 0, 1, 1, 1, 1000);
-    gmsh::model::occ::synchronize();
-
-    std::vector<std::pair<int, int>> faces;
-    gmsh::model::getEntities(faces, 2);
-
-    int tag = 1;
-    for (auto face : faces) {
-        gmsh::model::addPhysicalGroup(2, {face.first}, tag);
-        gmsh::model::setPhysicalName(2, tag, "Face_" + std::to_string(tag));
-        tag++;
-    }
-
-    gmsh::option::setNumber("Mesh.CharacteristicLengthMax", 0.5);
-    gmsh::option::setNumber("Mesh.MaxNumThreads3D", 10);
-    gmsh::option::setNumber("General.Verbosity", 1);
-    gmsh::model::mesh::generate(3);
-
+    std::cout << "L2 error: " << fem.computeL2Error();
     end = std::chrono::steady_clock::now();
     diff = end - start;
 
-    std::cout << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
+    std::cout << "\nL2: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
 
-    std::vector<std::pair<int, int>> boundary;
-    std::vector<std::pair<int, int>> domain;
 
-    domain.emplace_back(3, 1000);
 
-    gmsh::model::getBoundary(domain, boundary, true, false, false);
+    fem.outputData("/Users/andrei/CLionProjects/FEM/outputs/out.txt");
 
-    for(auto i : boundary) {
-        std::cout << i.first << " " << i.second << std::endl;
-    }
-
-    std::vector<int> elementTypes;
-    std::vector<std::vector<std::size_t> > elementTags;
-    std::vector<std::vector<std::size_t> > nodeTags;
-    gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, 2);
-
-    //std::cout << nodeTags[0].size() << std::endl;
-
-    std::vector<double> coords;
-    std::vector<double> parametricCoords;
-    gmsh::model::mesh::getNodes(nodeTags[0], coords, parametricCoords, 2, -1, true, true);
-
-//    for(int i = 0; i < coords.size() / 3; i++){
-//        std::cout << nodeTags[0][i] << " " << coords[3 * i] << " " << coords[3 * i + 1] << " " << coords[3 * i + 2] << " " <<
-//             parametricCoords[3 * i] << " " << parametricCoords[3 * i + 1] << " " << parametricCoords[3 * i + 2] << std::endl;
-//    }
-
-    std::vector<std::pair<int, int> > entities;
-    gmsh::model::getEntities(entities, 2);
-
-//    for(auto e : entities){
-//        int s = e.second;
-//
-//        std::vector<std::size_t> tags;
-//        std::vector<double> coord, param;
-//        gmsh::model::mesh::getNodes(tags, coord, param, 2, s, true);
-//
-//        for(auto i : coord){
-//            std::cout << i << " ";
-//        }
-//        std::cout << std::endl;
-//
-//    }
-
-//    gmsh::write("/Users/andrei/CLionProjects/FEM/test01.msh");
-//
 //    std::set<std::string> args(argv, argv + argc);
 //    if(!args.count("-nopopup")) gmsh::fltk::run();
-//
-//    gmsh::finalize();
 
-    return 0;
+
 }

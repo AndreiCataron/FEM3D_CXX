@@ -115,10 +115,19 @@ void Mesh::initMesh() {
 
     gmsh::model::getBoundary(domain_entity, elems.boundary, true, false, false);
 
+    // get face element to identify triangle type
+    auto b = elems.boundary[0];
+
+    std::vector<int> elementTypes;
+    std::vector<std::vector<std::size_t> > elementTags, nodeTags;
+    gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, b.first, b.second);
+
+    elems.triangleElementType = elementTypes[0];
+
     // get integration points for triangles
     std::string triangleIntRule = "Gauss" + std::to_string(params -> triangle_quadrature_precision);
 
-    gmsh::model::mesh::getIntegrationPoints(2, triangleIntRule, elems.triangleLocalCoord, elems.triangleWeights);
+    gmsh::model::mesh::getIntegrationPoints(elems.triangleElementType, triangleIntRule, elems.triangleLocalCoord, elems.triangleWeights);
     elems.triangleNoIntegrationPoints = int(elems.triangleLocalCoord.size() / 3);
 
     // get integration points for tetrahedrons
@@ -132,8 +141,9 @@ void Mesh::initMesh() {
     int numOrient, numComp;
 
     gmsh::model::mesh::getBasisFunctions(elems.elementType, elems.localCoord, functionSpaceType, numComp, elems.basisFunctionsValues, numOrient);
+
     // get basis function values at triangle integration points
-    gmsh::model::mesh::getBasisFunctions(2, elems.triangleLocalCoord, functionSpaceType, numComp, elems.triangleBasisFunctionsValues, numOrient);
+    gmsh::model::mesh::getBasisFunctions(elems.triangleElementType, elems.triangleLocalCoord, functionSpaceType, numComp, elems.triangleBasisFunctionsValues, numOrient);
 
     elems.noNodesPerElement = utils::binomialCoefficient(int(params -> element_order) + 3, 3);
     elems.noNodesPerTriangle = utils::binomialCoefficient(int(params -> element_order) + 2, 2);
@@ -145,12 +155,8 @@ void Mesh::initMesh() {
 
     // get jacobians of triangles
     std::vector<double> triangleJacobianCoords = {0.25, 0.25, 0}, triangleDeterminants, triangleJacobians, triangleGlobalCoords;
-    gmsh::model::mesh::getJacobians(2, triangleJacobianCoords, triangleJacobians, elems.trianglesDeterminants, triangleGlobalCoords);
-    gmsh::model::mesh::getJacobians(2, elems.triangleLocalCoord, triangleJacobians, triangleDeterminants, elems.trianglesGlobalCoord);
-
-//    std::cout << elems.cornerFaceNodes.size() << ' ' << elems.faceNodes.size() << ' ' << elems.elementTags.size() << '\n' <<
-//    elems.trianglesDeterminants.size() << '\n';
-
+    gmsh::model::mesh::getJacobians(elems.triangleElementType, triangleJacobianCoords, triangleJacobians, elems.trianglesDeterminants, triangleGlobalCoords);
+    gmsh::model::mesh::getJacobians(elems.triangleElementType, elems.triangleLocalCoord, triangleJacobians, triangleDeterminants, elems.trianglesGlobalCoord);
 
     // get the determinant of the jacobian of each element
     // todo-idea Modification

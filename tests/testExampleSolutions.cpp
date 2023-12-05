@@ -19,10 +19,10 @@ int main(int argc, char **argv) {
     auto g = [] (double x, double y, double z) {return std::vector<double>{x, y, z};};
 
     auto par = std::make_shared<ParamsLE>(ParamsLE{
-            0.1, // h,
+            0.05, // h,
             10,
             1,
-            "z != 0", // dirichlet BC
+            "z > 0", // dirichlet BC
             "z == 0", // neumann BC
             3, // quadrature precision
             2, // triangle quadrature precision
@@ -33,8 +33,8 @@ int main(int argc, char **argv) {
             g, // g
             -1, // lambda
             -1, // mu
-            0.34, // nu
-            12.864 // E
+            0.33, // nu
+            70.0 // E
     });
 
     utils::checkParamsLE(*par);
@@ -55,12 +55,12 @@ int main(int argc, char **argv) {
     fem.computeStiffnessMatrixAndLoadVector();
 
     auto end = std::chrono::steady_clock::now();
-    fem.solveDisplacements();
 
+    fem.solveDirectProblem();
 
     auto diff = end - start;
 
-    std::cout << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
+    std::cout << "Stiff:" << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
 
     Eigen::SparseMatrix<double> sm = fem.getStiffnessMatrix();
     Eigen::VectorXd lv = fem.getLoadVector();

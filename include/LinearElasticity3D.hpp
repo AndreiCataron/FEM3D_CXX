@@ -16,7 +16,7 @@ public:
 
     Eigen::Vector3d h(std::vector<double>, int);
     void computeStiffnessMatrixAndLoadVector() override;
-    void solveDisplacements() override;
+    void solveDirectProblem() override;
 };
 
 #endif

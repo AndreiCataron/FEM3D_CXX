@@ -1,5 +1,13 @@
 set(CMAKE_CXX_STANDARD 20)
 
+#if(NOT CMAKE_BUILD_TYPE)
+#    set(CMAKE_BUILD_TYPE Release)
+#endif()
+#
+#set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+#set(CMAKE_CXX_FLAGS_DEBUG "-g")
+#set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+
 find_library(FOO_LIB gmsh)
 
 find_path(FOO_PATH gmsh.h)
@@ -20,6 +28,10 @@ target_link_libraries(sbc LINK_PUBLIC "${FOO_LIB}")
 
 target_link_libraries(stiff PUBLIC OpenMP::OpenMP_CXX)
 target_link_libraries(rtst PUBLIC OpenMP::OpenMP_CXX)
+target_link_libraries(cpi PUBLIC OpenMP::OpenMP_CXX)
+target_link_libraries(sbc PUBLIC OpenMP::OpenMP_CXX)
+target_link_libraries(cnsbc PUBLIC OpenMP::OpenMP_CXX)
+target_link_libraries(exam PUBLIC OpenMP::OpenMP_CXX)
 
 target_include_directories(sbc PUBLIC "${FOO_PATH}")
 

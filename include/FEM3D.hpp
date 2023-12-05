@@ -9,6 +9,7 @@
 #include "Mesh.hpp"
 #include "params.hpp"
 #include <memory>
+#include "/opt/homebrew/Cellar/libomp/17.0.4/include/omp.h"
 
 typedef exprtk::symbol_table<double> symbol_table_t;
 typedef exprtk::expression<double>   expression_t;
@@ -43,8 +44,8 @@ protected:
     // indexes of free nodes
     std::vector<int> freeNodes;
     // faces where neumann boundary conditions are imposed
-    std::vector<std::size_t> neumannFaceNodes = {};
-    std::vector<std::size_t> neumannFaceTags = {};
+    // store for each neumann triangle on the boundary the tag of the respective boundary surface
+    std::unordered_map<std::size_t, std::size_t> neumannBoundaryTriangles = {};
     // stiffness matrix
     Eigen::SparseMatrix<double> stiffness_matrix;
     // load vector
@@ -69,7 +70,7 @@ public:
     // return 0 if no bc are imposed, 1 for dirichlet, 2 for neumann
     int checkNodeSatisfiesBoundaryEquation(double, double, double);
     virtual void computeStiffnessMatrixAndLoadVector() = 0;
-    virtual void solveDisplacements() = 0;
+    virtual void solveDirectProblem() = 0;
 
     virtual void outputData(std::string) = 0;
 

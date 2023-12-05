@@ -14,8 +14,11 @@ public:
     struct MeshElements {
         // store for each node [tag : coordinates]
         std::unordered_map<std::size_t, std::tuple<double, double, double> > node_coordinates = {};
-        // store for each triangle on the boundary the tag of the respective boundary surface
-        std::unordered_map<std::size_t, std::size_t> boundaryTriangles = {};
+
+        std::vector<std::size_t> boundaryFacesTags = {}, boundaryFacesNodes = {};
+
+        // triangular face elements
+        int triangleElementType = -1;
 
         // tetrahedron elements
         std::vector<int> elementTypes = {};

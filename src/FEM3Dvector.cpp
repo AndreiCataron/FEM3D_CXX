@@ -5,9 +5,9 @@
 #include "../include/utils.hpp"
 #include <iostream>
 
-FEM3DVector::FEM3DVector(std::shared_ptr<ParamsVector> const &params) : params3d_(params), FEM3D(params) {}
+FEM3DVector::FEM3DVector(std::shared_ptr<ParamsVector> const &params) : FEM3D(params), params3d_(params) {}
 
-FEM3DVector::FEM3DVector(std::shared_ptr<ParamsVector> const &params, Mesh &msh) : params3d_(params), FEM3D(params, msh){}
+FEM3DVector::FEM3DVector(std::shared_ptr<ParamsVector> const &params, Mesh &msh) : FEM3D(params, msh), params3d_(params){}
 
 void FEM3DVector::setBoundaryConditions() {
     setNeumannBoundaryConditions();

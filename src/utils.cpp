@@ -10,7 +10,7 @@ int utils::binomialCoefficient(int n, int k) {
 void utils::checkParamsLE(ParamsLE &params) {
     // if E and nu are given, compute lambda and mu
     if (params.lambda < 0 && params.mu < 0 && params.nu >= -1 && params.nu <= 0.5 && params.E > 0) {
-        params.lambda = params.E / ((1 + params.nu) * (1 - 2 * params.nu));
+        params.lambda = params.E * params.nu / ((1 + params.nu) * (1 - 2 * params.nu));
         params.mu = params.E / (2 * (1 + params.nu));
     }
     else {

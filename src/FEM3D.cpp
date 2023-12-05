@@ -15,6 +15,7 @@ FEM3D::FEM3D(std::shared_ptr<Params> const &params) : params_(params){
 }
 
 FEM3D::FEM3D(std::shared_ptr<Params> const &params, Mesh &msh) : params_(params), mesh(msh) {
+    // used for parsing logical expressions i.e. boundary conditions
     symbol_table.add_variable("x", _x);
     symbol_table.add_variable("y", _y);
     symbol_table.add_variable("z", _z);
@@ -57,28 +58,28 @@ void FEM3D::setNeumannBoundaryConditions() {
         std::vector<std::vector<std::size_t> > elementTags, nodeTags;
         gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, b.first, b.second);
 
+        mesh.elems.boundaryFacesTags.insert(mesh.elems.boundaryFacesTags.end(), elementTags[0].begin(), elementTags[0].end());
+        mesh.elems.boundaryFacesNodes.insert(mesh.elems.boundaryFacesNodes.end(), nodeTags[0].begin(), nodeTags[0].end());
+
         for (int i = 0; i < elementTags[0].size(); i++) {
             std::size_t triangleTag = elementTags[0][i];
-            std::vector<std::size_t> faceNodeTags = std::vector<std::size_t>(mesh.elems.nodeTags.begin() + i * mesh.elems.noNodesPerTriangle,
-                                                                             mesh.elems.nodeTags.begin() + (i + 1) * mesh.elems.noNodesPerTriangle);
+            std::vector<std::size_t> faceNodeTags = std::vector<std::size_t>(nodeTags[0].begin() + i * mesh.elems.noNodesPerTriangle,
+                                                                             nodeTags[0].begin() + (i + 1) * mesh.elems.noNodesPerTriangle);
 
+            bool ok = true;
             for (auto tag : faceNodeTags) {
                 std::tuple<double, double, double> coord = mesh.elems.node_coordinates[tag];
+                int bc = checkNodeSatisfiesBoundaryEquation(std::get<0>(coord), std::get<1>(coord), std::get<2>(coord));
+
+                if (bc != 2) {
+                    ok = false;
+                    break;
+                }
+                else continue;
             }
-        }
 
-        std::vector<std::size_t> tags;
-        std::vector<double> coord, param_coords;
-        gmsh::model::mesh::getNodes(tags, coord, param_coords, b.first, b.second, true, false);
-
-        for (int i = 0; i < tags.size(); i++) {
-            std::size_t tag = tags[i];
-            int bc = checkNodeSatisfiesBoundaryEquation(coord[3 * i], coord[3 * i + 1], coord[3 * i + 2]);
-
-            if (bc == 2) {
-//                if (mesh.elems.neumannBoundaryNodes.contains(tag) == 0) {
-//                    mesh.elems.neumannBoundaryNodes.insert(tag);
-//                }
+            if (ok) {
+                neumannBoundaryTriangles[triangleTag] = b.second;
             }
         }
     }
