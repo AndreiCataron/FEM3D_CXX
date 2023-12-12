@@ -71,14 +71,12 @@ void FEM3DVector::outputData(std::string file) {
         myFile << tag << ' ' << displacements(3 * idx) << ' ' << displacements(3 * idx + 1) << ' ' << displacements(3 * idx + 2) << ' ';
     }
 
-//    for (auto d : displacements) {
-//        myFile << d << ' ';
-//    }
+    // neumann boundary error
 
     myFile.close();
 }
 
-double FEM3DVector::computeL2Error() {
+void FEM3DVector::computeL2Error() {
     double result = 0;
 
     for (int i = 0; i < mesh.elems.elementTags.size(); i++) {
@@ -124,7 +122,61 @@ double FEM3DVector::computeL2Error() {
         result += det * integral;
     }
 
-    return sqrt(result);
+    l2_error = sqrt(result);
+}
+
+void FEM3DVector::computeH1Error() {
+    double result = l2_error * l2_error;
+
+    for (int i = 0; i < mesh.elems.elementTags.size(); i++) {
+        // get tags of nodes in current element
+        std::vector<std::size_t> elementNodeTags = std::vector<std::size_t>(
+                mesh.elems.nodeTags.begin() + i * mesh.elems.noNodesPerElement,
+                mesh.elems.nodeTags.begin() + (i + 1) * mesh.elems.noNodesPerElement);
+        double det = mesh.elems.determinants[i];
+
+        double integral = 0;
+
+        // quadrature
+        Eigen::Vector3d referenceGrads, elementGrads;
+        for (int j = 0; j < mesh.elems.noIntegrationPoints; j++) {
+            // the exact solution gradient at the integration point
+            Eigen::Matrix3d exact = params3d_ -> solution_gradient(mesh.elems.globalCoord[i * mesh.elems.localCoord.size() + 3 * j],
+                                                                   mesh.elems.globalCoord[i * mesh.elems.localCoord.size() + 3 * j + 1],
+                                                                   mesh.elems.globalCoord[i * mesh.elems.localCoord.size() + 3 * j + 2]);
+
+            // the approximate solution gradient at the integration point
+            Eigen::Matrix3d approxGradient = Eigen::Matrix3d::Zero();
+
+            for (int k = 0; k < mesh.elems.noNodesPerElement; k++) {
+                referenceGrads << mesh.elems.basisFunctionsGradients[j * 3 * mesh.elems.noNodesPerElement + 3 * k],
+                                  mesh.elems.basisFunctionsGradients[j * 3 * mesh.elems.noNodesPerElement + 3 * k + 1],
+                                  mesh.elems.basisFunctionsGradients[j * 3 * mesh.elems.noNodesPerElement + 3 * k + 2];
+
+                elementGrads = mesh.elems.inverse_jacobians[i].transpose() * referenceGrads;
+                elementGrads = elementGrads.transpose();
+
+                std::size_t tag = elementNodeTags[k];
+                int index = nodeIndexes[tag];
+
+                approxGradient.row(0) += displacements(3 * index) * elementGrads;
+                approxGradient.row(1) += displacements(3 * index + 1) * elementGrads;
+                approxGradient.row(2) += displacements(3 * index + 2) * elementGrads;
+            }
+
+            for (int u = 0; u < 3; u++) {
+                for (int v = 0; v < 3; v++) {
+                    integral += mesh.elems.weights[j] * (exact(u, v) - approxGradient(u, v)) * (exact(u, v) - approxGradient(u, v));
+                }
+            }
+
+        }
+
+        result += det * integral;
+    }
+
+    h1_error = sqrt(result);
+
 }
 
 std::unordered_map<std::size_t, std::vector<double> > FEM3DVector::getDirichletBC() {

@@ -23,7 +23,8 @@ public:
 
     void outputData(std::string) override;
 
-    double computeL2Error() override;
+    void computeL2Error() override;
+    void computeH1Error() override;
 
     //getters
     std::unordered_map<std::size_t, std::vector<double> > getDirichletBC();

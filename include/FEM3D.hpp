@@ -52,6 +52,8 @@ protected:
     Eigen::VectorXd load_vector;
     // solution in displacements
     Eigen::VectorXd displacements;
+    // errors
+    double l2_error, h1_error;
 
 public:
     // constructors
@@ -74,7 +76,8 @@ public:
 
     virtual void outputData(std::string) = 0;
 
-    virtual double computeL2Error() = 0;
+    virtual void computeL2Error() = 0;
+    virtual void computeH1Error() = 0;
 
     //getters
     std::unordered_map<std::size_t, int> getNodeIndexes();
@@ -83,6 +86,8 @@ public:
     Eigen::SparseMatrix<double> getStiffnessMatrix();
     Eigen::VectorXd getLoadVector();
     Eigen::VectorXd getDisplacements();
+    double getL2Error();
+    double getH1Error();
 };
 
 #endif

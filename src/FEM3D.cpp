@@ -127,3 +127,10 @@ Eigen::VectorXd FEM3D::getDisplacements() {
     return displacements;
 }
 
+double FEM3D::getL2Error() {
+    return l2_error;
+}
+
+double FEM3D::getH1Error() {
+    return h1_error;
+}

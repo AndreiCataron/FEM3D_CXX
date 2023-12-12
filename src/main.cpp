@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
     std::cout << "Load Vector Size: " << lv.size() << '\n';
 
     start = std::chrono::steady_clock::now();
-    std::cout << "L2 error: " << fem.computeL2Error();
+    std::cout << "L2 error: " << fem.getL2Error();
     end = std::chrono::steady_clock::now();
     diff = end - start;
 

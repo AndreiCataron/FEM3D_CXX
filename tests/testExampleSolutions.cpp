@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
     auto g = [] (double x, double y, double z) {return std::vector<double>{x, y, z};};
 
     auto par = std::make_shared<ParamsLE>(ParamsLE{
-            0.05, // h,
+            0.04 , // h,
             10,
             1,
             "z > 0", // dirichlet BC
@@ -38,6 +38,8 @@ int main(int argc, char **argv) {
     });
 
     utils::checkParamsLE(*par);
+
+    Eigen::initParallel();
 
     std::cout << "Salut " << par -> mu << '\n';
 
@@ -69,12 +71,20 @@ int main(int argc, char **argv) {
     std::cout << "Load Vector Size: " << lv.size() << '\n';
 
     start = std::chrono::steady_clock::now();
-    std::cout << "L2 error: " << fem.computeL2Error();
+    fem.computeL2Error();
+    std::cout << "L2 error: " << fem.getL2Error();
     end = std::chrono::steady_clock::now();
     diff = end - start;
 
     std::cout << "\nL2: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
 
+    start = std::chrono::steady_clock::now();
+    fem.computeH1Error();
+    std::cout << "H1 error: " << fem.getH1Error();
+    end = std::chrono::steady_clock::now();
+    diff = end - start;
+
+    std::cout << "\nH1: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
 
 
     fem.outputData("/Users/andrei/CLionProjects/FEM/outputs/out.txt");

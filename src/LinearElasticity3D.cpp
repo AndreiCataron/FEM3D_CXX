@@ -20,9 +20,12 @@ Eigen::Vector3d LinearElasticity3D::h(std::vector<double> coord, const int tag) 
 
     // get normal
     std::vector<double> parametricCoord, normal;
-    gmsh::model::getParametrization(2, tag, coord, parametricCoord);
+#pragma omp critical
+    {
+        gmsh::model::getParametrization(2, tag, coord, parametricCoord);
 
-    gmsh::model::getNormal(tag, parametricCoord, normal);
+        gmsh::model::getNormal(tag, parametricCoord, normal);
+    }
 
     // convert normal to Eigen::Vector3d
     double *ptr = &normal[0];
@@ -98,10 +101,10 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
             Eigen::MatrixXd B = Eigen::MatrixXd::Zero(6, bNoCols);
 
             for (int k = 0; k < mesh.elems.noNodesPerElement; k++) {
-                Eigen::VectorXd referenceGrads(3), elementGrads(3);
+                Eigen::Vector3d referenceGrads, elementGrads;
                 referenceGrads << mesh.elems.basisFunctionsGradients[j * 3 * mesh.elems.noNodesPerElement + 3 * k],
-                        mesh.elems.basisFunctionsGradients[j * 3 * mesh.elems.noNodesPerElement + 3 * k + 1],
-                        mesh.elems.basisFunctionsGradients[j * 3 * mesh.elems.noNodesPerElement + 3 * k + 2];
+                                  mesh.elems.basisFunctionsGradients[j * 3 * mesh.elems.noNodesPerElement + 3 * k + 1],
+                                  mesh.elems.basisFunctionsGradients[j * 3 * mesh.elems.noNodesPerElement + 3 * k + 2];
 
                 elementGrads = mesh.elems.inverse_jacobians[i].transpose() * referenceGrads;
                 double a = elementGrads(0), b = elementGrads(1), c = elementGrads(2);
@@ -177,8 +180,8 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
 
     std::cout << "STIFF 1: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
 
-
     // neumann contribution
+
 #pragma omp parallel shared(load_vector)
 {
     #pragma omp for
@@ -254,8 +257,6 @@ void LinearElasticity3D::solveDirectProblem() {
     Eigen::ConjugateGradient<Eigen::SparseMatrix<double> > solver;
 
     auto start = std::chrono::steady_clock::now();
-
-    std::cout << "THREADURI: " << omp_get_num_threads() << '\n';
 
     displacements.tail(3 * freeNodes.size()) = solver.compute(stiffness_matrix).solve(load_vector);
 
