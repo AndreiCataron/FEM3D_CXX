@@ -1,6 +1,7 @@
 #include "../include/utils.hpp"
 #include <cmath>
 #include <iostream>
+#include <tuple>
 
 int utils::binomialCoefficient(int n, int k) {
     double coefficient = std::tgamma(n + 1) / (std::tgamma(k + 1) * std::tgamma(n - k + 1));
@@ -63,6 +64,28 @@ std::vector<double> utils::midpoint(std::vector<double> &p1, std::vector<double>
         }
         else {
             throw std::runtime_error("The points must have the same length");
+        }
+    }
+    catch(std::exception const &e) {
+        std::cout << "Runtime error: " << e.what() << '\n';
+    }
+    return {};
+}
+
+std::tuple<double, double, double> utils::projectionOnPlane(std::tuple<double, double, double> &point, std::vector<double> &plane) {
+    try {
+        if (plane.size() == 4) {
+
+            double coef = (plane[0] * std::get<0>(point) + plane[1] * std::get<1>(point) + plane[2] * std::get<2>(point) + plane[3]) /
+                    (plane[0] * plane[0] + plane[1] * plane[1] + plane[2] * plane[2]);
+
+
+            return std::tuple<double, double, double>{std::get<0>(point) - coef * plane[0], std::get<1>(point) - coef * plane[1],
+                                                      std::get<2>(point) - coef * plane[2]};
+
+        }
+        else {
+            throw std::runtime_error("The vector does not correctly discribe the equation of a plane");
         }
     }
     catch(std::exception const &e) {

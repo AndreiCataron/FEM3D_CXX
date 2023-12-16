@@ -3,8 +3,8 @@
 
 #include <string>
 #include <functional>
-#include <eigen3/Eigen/Dense>
-#include <eigen3/Eigen/Sparse>
+#include </opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3/Eigen/Dense>
+#include </opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3/Eigen/Sparse>
 
 struct Params{
     // mesh size

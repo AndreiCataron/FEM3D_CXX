@@ -53,7 +53,7 @@ protected:
     // solution in displacements
     Eigen::VectorXd displacements;
     // errors
-    double l2_error, h1_error;
+    double l2_error = -1, h1_error = -1;
 
 public:
     // constructors
@@ -74,7 +74,7 @@ public:
     virtual void computeStiffnessMatrixAndLoadVector() = 0;
     virtual void solveDirectProblem() = 0;
 
-    virtual void outputData(std::string) = 0;
+    virtual void outputData(std::string, bool boundaryError = false, std::vector<double> plane = {}) = 0;
 
     virtual void computeL2Error() = 0;
     virtual void computeH1Error() = 0;
@@ -86,8 +86,8 @@ public:
     Eigen::SparseMatrix<double> getStiffnessMatrix();
     Eigen::VectorXd getLoadVector();
     Eigen::VectorXd getDisplacements();
-    double getL2Error();
-    double getH1Error();
+    double getL2Error() const;
+    double getH1Error() const;
 };
 
 #endif

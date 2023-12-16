@@ -395,19 +395,218 @@
 //    return 0;
 //}
 
-#include <iostream>
-#include <omp.h>
+//#include <iostream>
+//#include <omp.h>
+//
+//int main() {
+//    int tid, nthreads;
+//
+//#pragma omp parallel private(tid)
+//    {
+//        tid = omp_get_thread_num();
+//        nthreads = omp_get_num_threads();
+//
+//        std::cout << "Thread " << tid << " of " << nthreads << '\n';
+//    }
+//
+//    return 0;
+//}
+
+#include<iostream>
+#include<string>
+
+using namespace std;
+
+class festivale {
+private:
+    const int id_festival;
+
+public:
+    string numeFestival;
+    string main_artist;
+    float *pret;
+
+public:
+
+    festivale() : id_festival(0), numeFestival("Electric Castle"), main_artist("Necunoscut"), pret(nullptr) {}
+
+
+    festivale(int id, string numeFestival, string main_artist, float *pret) : id_festival(id),
+                                                                              numeFestival(numeFestival),
+                                                                              main_artist(main_artist), pret(pret) {}
+
+    festivale(const festivale& altFest) : id_festival(altFest.id_festival) {
+        numeFestival = altFest.numeFestival;
+        main_artist = altFest.main_artist;
+
+        pret = nullptr;
+    }
+
+    ~festivale() {
+        cout << endl << "A fost apelat destructorul clasei de baza." << endl;
+        delete pret;
+    }
+
+
+    float* getPret() {
+        return pret;
+    }
+
+};
+
+void afisareCampuri(festivale *obiect) {
+    cout << endl << "Festivalul " << obiect->numeFestival << " cu main artistul " << obiect->main_artist;
+}
+
+enum TipMuzica { Simfonica=1, Camerata=2, Corala=3 };
+
+class FestivalMuzicaClasica : public festivale {
+private:
+    int* locuriPrimulRand;
+    char* numeOrchestra;
+    const bool esteInstrumental;
+    TipMuzica tipMuzica;
+    int durataConcert;
+    int nrInstrumente;
+    int nrBileteVandute;
+    int nrLocuriPrimulRand;
+    float pretBilet;
+
+public:
+    FestivalMuzicaClasica() : festivale(), locuriPrimulRand(nullptr), esteInstrumental(true), tipMuzica(Simfonica), durataConcert(120), nrInstrumente(50), nrBileteVandute(0), nrLocuriPrimulRand(10), pretBilet(50.0f) {
+        this -> numeOrchestra = new char[100];
+        strcpy(this -> numeOrchestra, "Orchestra Necunoscuta");
+        this -> locuriPrimulRand = new int[nrLocuriPrimulRand];
+        for (int i = 0; i < nrLocuriPrimulRand; i++) {
+            this -> locuriPrimulRand[i] = i + 1;
+        }
+    }
+
+    FestivalMuzicaClasica(int id, string numeFestival, string main_artist, float *pret, int* locuri, char* nume, bool instrumental, TipMuzica tip, int durata, int nrInst, int nrBilete, int nrScaune, float pret2) :
+                          festivale(id, numeFestival, main_artist, pret), esteInstrumental(instrumental), tipMuzica(tip), durataConcert(durata), nrInstrumente(nrInst), nrBileteVandute(nrBilete), nrLocuriPrimulRand(nrScaune), pretBilet(pret2) {
+        this -> locuriPrimulRand = new int[this -> nrLocuriPrimulRand];
+        for (int i = 0; i < this -> nrLocuriPrimulRand; i++) {
+            this -> locuriPrimulRand[i] = locuri[i];
+        }
+
+        this -> numeOrchestra = new char[strlen(nume) + 1];
+        memcpy(this -> numeOrchestra, nume, strlen(nume) + 1);
+
+        delete[] locuri;
+    }
+
+    FestivalMuzicaClasica(TipMuzica tip, int durata, int nrInst, float pret2) :
+            festivale(), esteInstrumental(false), tipMuzica(tip), durataConcert(durata), nrInstrumente(nrInst), nrBileteVandute(0), nrLocuriPrimulRand(0), pretBilet(pret2) {
+        this -> locuriPrimulRand = nullptr;
+
+        this -> numeOrchestra = nullptr;
+    }
+
+    FestivalMuzicaClasica(const FestivalMuzicaClasica& altFestival) : festivale(altFestival), esteInstrumental(altFestival.esteInstrumental), tipMuzica(altFestival.tipMuzica), durataConcert(altFestival.durataConcert), nrInstrumente(altFestival.nrInstrumente), nrBileteVandute(altFestival.nrBileteVandute), nrLocuriPrimulRand(altFestival.nrLocuriPrimulRand), pretBilet(altFestival.pretBilet) {
+        this -> locuriPrimulRand = new int[altFestival.nrLocuriPrimulRand];
+        for (int i = 0; i < this -> nrLocuriPrimulRand; i++) {
+            this -> locuriPrimulRand[i] = altFestival.locuriPrimulRand[i];
+        }
+
+        this -> numeOrchestra = new char[strlen(altFestival.numeOrchestra) + 1];
+        strcpy(this -> numeOrchestra, altFestival.numeOrchestra);
+    }
+
+    ~FestivalMuzicaClasica() {
+        cout << "A fost apelat destructorul derivatei." << endl;
+        delete[] this -> locuriPrimulRand;
+        delete[] this -> numeOrchestra;
+    }
+
+    FestivalMuzicaClasica& operator=(const FestivalMuzicaClasica& altFestival) {
+        if (this != &altFestival) {
+            delete[] this -> locuriPrimulRand;
+            delete[] this -> numeOrchestra;
+
+            this -> locuriPrimulRand = new int[altFestival.nrLocuriPrimulRand];
+            for (int i = 0; i < altFestival.nrLocuriPrimulRand; i++) {
+                this -> locuriPrimulRand[i] = altFestival.locuriPrimulRand[i];
+            }
+
+            numeOrchestra = new char[strlen(altFestival.numeOrchestra) + 1];
+            strcpy(numeOrchestra, altFestival.numeOrchestra);
+
+            this -> tipMuzica = altFestival.tipMuzica;
+            this -> durataConcert = altFestival.durataConcert;
+            this -> nrInstrumente = altFestival.nrInstrumente;
+            this -> nrBileteVandute = altFestival.nrBileteVandute;
+            this -> nrLocuriPrimulRand = altFestival.nrLocuriPrimulRand;
+            this -> pretBilet = altFestival.pretBilet;
+
+        }
+        return *this;
+    }
+
+
+
+    char* getNumeOrchestra() {
+        return this -> numeOrchestra;
+    }
+
+    int getPret() {
+        return this -> pretBilet;
+    }
+
+    void setNumeOrchestra(const char* nume) {
+        delete[] this -> numeOrchestra;
+        this -> numeOrchestra = new char[strlen(nume) + 1];
+        strcpy(this -> numeOrchestra, nume);
+    }
+
+    int operator() () {
+        return this -> nrBileteVandute;
+    }
+
+    void operator+=(float scumpire) {
+        this -> pretBilet += scumpire;
+    }
+
+    void afisare() {
+        afisareCampuri(this);
+
+        cout << ". Acesta este un festival de muzica de muzica clasica de tip " << this -> tipMuzica << ". Concertul va dura " << this -> durataConcert << " minute, va avea " <<
+        this -> nrInstrumente << " tipuri de instrumente. In sala sunt disponibile " << this -> nrLocuriPrimulRand << " locuri pe primul rand. Va canta orchestra ";
+        if(numeOrchestra != nullptr){
+            cout << numeOrchestra << ". \n";
+        }
+        else {
+            cout << " fara nume." << endl;
+        }
+    }
+};
 
 int main() {
-    int tid, nthreads;
 
-#pragma omp parallel private(tid)
-    {
-        tid = omp_get_thread_num();
-        nthreads = omp_get_num_threads();
+    float* pret = new float[100.0f];
+    int* locuri = new int[5] {1, 2, 3, 4, 5};
+    char* nume1 = new char[strlen("George Enescu")];
+    strcpy(nume1, "George Enescu");
 
-        std::cout << "Thread " << tid << " of " << nthreads << '\n';
-    }
+    FestivalMuzicaClasica festival_default();
+
+    FestivalMuzicaClasica george_enescu(0, nume1, "Orchestra Simfonica Bucuersti", pret, locuri, "OSB", true, Simfonica, 100, 10, 200, 5, 100);
+
+    FestivalMuzicaClasica* copie = new FestivalMuzicaClasica(george_enescu);
+
+    copie -> afisare();
+
+    cout << "S-au vandut " << (*copie)() << " bilete. Canta orchestra " << copie -> getNumeOrchestra() << endl;
+
+    george_enescu.setNumeOrchestra("Filarmonica Constanta");
+    cout << copie -> getNumeOrchestra() << " nu mai poate ajunge la festival. Va fi inlocuita de " << george_enescu.getNumeOrchestra() << endl;
+
+    george_enescu += 50;
+    cout << "S-a scumpit biletul! Vechiul pret era " << copie -> getPret() << ". Noul pret este " << george_enescu.getPret();
+
+    FestivalMuzicaClasica patru_parametrii(Corala, 100, 3, 200);
+    patru_parametrii.afisare();
 
     return 0;
 }
+
+

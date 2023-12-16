@@ -31,7 +31,6 @@ void FEM3DVector::setBoundaryConditions() {
                     dirichlet_bc[tag] = prescribed_condition;
                 }
             }
-            // add here other BC
         }
     }
 
@@ -49,7 +48,8 @@ void FEM3DVector::indexConstrainedNodes() {
     }
 }
 
-void FEM3DVector::outputData(std::string file) {
+// if boundaryError is True, output a projection on the plane given by equation of the solution on the neumann boundary
+void FEM3DVector::outputData(std::string file, bool boundaryError, std::vector<double> plane) {
     std::ofstream myFile;
     myFile.open(file, std::ios::out | std::ios::trunc);
 
@@ -70,8 +70,59 @@ void FEM3DVector::outputData(std::string file) {
     for (const auto& [tag, idx] : nodeIndexes) {
         myFile << tag << ' ' << displacements(3 * idx) << ' ' << displacements(3 * idx + 1) << ' ' << displacements(3 * idx + 2) << ' ';
     }
+    myFile << '\n';
 
     // neumann boundary error
+    std::vector<std::size_t> boundaryNodesUnique = {};
+    if (boundaryError) {
+        for (auto coef : plane) myFile << coef << ' ';
+        myFile << '\n';
+
+        for (int i = 0; i < mesh.elems.boundaryFacesTags.size(); i++) {
+            std::size_t faceTag = mesh.elems.boundaryFacesTags[i];
+            if (neumannBoundaryTriangles.find(faceTag) != neumannBoundaryTriangles.end()) {
+                std::vector<std::size_t> faceNodeTags = std::vector<std::size_t>(
+                        mesh.elems.boundaryFacesNodes.begin() + i * mesh.elems.noNodesPerTriangle,
+                        mesh.elems.boundaryFacesNodes.begin() + (i + 1) * mesh.elems.noNodesPerTriangle);
+                boundaryNodesUnique.insert(boundaryNodesUnique.end(), faceNodeTags.begin(), faceNodeTags.end());
+            }
+        }
+        utils::deleteDuplicatesFromVector(boundaryNodesUnique);
+
+        for (auto tag : boundaryNodesUnique) {
+            std::tuple<double, double, double> projection = utils::projectionOnPlane(mesh.elems.node_coordinates[tag], plane);
+
+            myFile << tag << ' ' << std::get<0>(projection) << ' ' << std::get<1>(projection) << ' ' << std::get<2>(projection) << ' ';
+        }
+    }
+    else {
+        std::cout << '\n';
+    }
+    myFile << '\n';
+
+    // output exact solution
+    for (const auto& [tag, coord]: mesh.elems.node_coordinates) {
+        std::vector<double> exact;
+        exact.reserve(3);
+
+        exact = params3d_ -> exact_solution(std::get<0>(coord), std::get<1>(coord), std::get<2>(coord));
+
+        myFile << tag << ' ' << exact[0] << ' ' << exact[1] << ' ' << exact[2] << ' ';
+    }
+    myFile << '\n';
+
+    // output exact solution on neumann boundary projected on plane
+    if (boundaryError) {
+        for (auto tag : boundaryNodesUnique) {
+            std::tuple<double, double, double> coord = mesh.elems.node_coordinates[tag];
+
+            std::vector<double> exact;
+            exact.reserve(3);
+
+            exact = params3d_ -> exact_solution(std::get<0>(coord), std::get<1>(coord), std::get<2>(coord));
+            myFile << tag << ' ' << exact[0] << ' ' << exact[1] << ' ' << exact[2] << ' ';
+        }
+    }
 
     myFile.close();
 }
@@ -138,7 +189,6 @@ void FEM3DVector::computeH1Error() {
         double integral = 0;
 
         // quadrature
-        Eigen::Vector3d referenceGrads, elementGrads;
         for (int j = 0; j < mesh.elems.noIntegrationPoints; j++) {
             // the exact solution gradient at the integration point
             Eigen::Matrix3d exact = params3d_ -> solution_gradient(mesh.elems.globalCoord[i * mesh.elems.localCoord.size() + 3 * j],
@@ -148,6 +198,7 @@ void FEM3DVector::computeH1Error() {
             // the approximate solution gradient at the integration point
             Eigen::Matrix3d approxGradient = Eigen::Matrix3d::Zero();
 
+            Eigen::Vector3d referenceGrads, elementGrads;
             for (int k = 0; k < mesh.elems.noNodesPerElement; k++) {
                 referenceGrads << mesh.elems.basisFunctionsGradients[j * 3 * mesh.elems.noNodesPerElement + 3 * k],
                                   mesh.elems.basisFunctionsGradients[j * 3 * mesh.elems.noNodesPerElement + 3 * k + 1],
@@ -169,7 +220,6 @@ void FEM3DVector::computeH1Error() {
                     integral += mesh.elems.weights[j] * (exact(u, v) - approxGradient(u, v)) * (exact(u, v) - approxGradient(u, v));
                 }
             }
-
         }
 
         result += det * integral;

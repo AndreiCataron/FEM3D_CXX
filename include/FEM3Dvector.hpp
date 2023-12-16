@@ -21,7 +21,7 @@ public:
     void setBoundaryConditions() override;
     void indexConstrainedNodes() override;
 
-    void outputData(std::string) override;
+    void outputData(std::string, bool bounadryError = false, std::vector<double> plane = {}) override;
 
     void computeL2Error() override;
     void computeH1Error() override;

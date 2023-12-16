@@ -5,19 +5,31 @@
 #include <vector>
 
 int main(int argc, char **argv) {
-    auto exact = [] (double x, double y, double z) {return std::vector<double>{x, y, z};};
+    auto exact = [] (double x, double y, double z) {
+        double nu = 0.33, E = 70.0;
+        return std::vector<double>{(1 + nu) / E * (- nu * x * y + z + 1),
+                                   (1 + nu) / E * (0.5 * (nu * x * x + y * y + nu * z * z)),
+                                   (1 + nu) / E * (- x - nu * y * z)};};
+
     auto grad = [] (double x, double y, double z) {
+        double nu = 0.33, E = 70.0;
         Eigen::Matrix3d grd;
-        grd << 1, 0, 0,
-                0, 1, 0,
-                0, 0, 1;
-        return grd;
+        grd << - nu * y, - nu * x, 1,
+                nu * x, y, nu * z,
+                -1, - nu * z, - nu * y;
+        return (1 + nu) / E * grd;
     };
-    auto f = [] (double x, double y, double z) {return std::vector<double>{0, 0, 0};};
-    auto g = [] (double x, double y, double z) {return std::vector<double>{x, y, z};};
+
+    auto f = [] (double x, double y, double z) {return std::vector<double>{0, -1.33, 0};};
+    auto g = [] (double x, double y, double z) {
+        double nu = 0.33, E = 70.0;
+        return std::vector<double>{(1 + nu) / E * (- nu * x * y + z + 1),
+                                   (1 + nu) / E * (0.5 * (nu * x * x + y * y + nu * z * z)),
+                                   (1 + nu) / E * (- x - nu * y * z)};
+    };
 
     auto par = std::make_shared<ParamsLE>(ParamsLE{
-            0.1 , // h,
+            0.05 , // h,
             10,
             1,
             "z > 0", // dirichlet BC
@@ -86,9 +98,6 @@ int main(int argc, char **argv) {
 
     std::vector<double> plane = {0, 0, 1, 0};
     fem.outputData("/Users/andrei/CLionProjects/FEM/outputs/out.txt", true, plane);
-
-//    std::set<std::string> args(argv, argv + argc);
-//    if(!args.count("-nopopup")) gmsh::fltk::run();
 
 
 }

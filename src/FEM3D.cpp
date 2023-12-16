@@ -1,7 +1,6 @@
 #include "../include/FEM3D.hpp"
 
 #include <gmsh.h>
-#include <iostream>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
 
@@ -127,10 +126,10 @@ Eigen::VectorXd FEM3D::getDisplacements() {
     return displacements;
 }
 
-double FEM3D::getL2Error() {
+double FEM3D::getL2Error() const {
     return l2_error;
 }
 
-double FEM3D::getH1Error() {
+double FEM3D::getH1Error() const {
     return h1_error;
 }
