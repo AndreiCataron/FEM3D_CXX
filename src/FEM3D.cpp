@@ -1,6 +1,7 @@
 #include "../include/FEM3D.hpp"
 
 #include <gmsh.h>
+#include <iostream>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
 

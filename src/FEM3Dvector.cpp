@@ -2,7 +2,6 @@
 
 #include <gmsh.h>
 #include <fstream>
-#include "../include/utils.hpp"
 #include <iostream>
 
 FEM3DVector::FEM3DVector(std::shared_ptr<ParamsVector> const &params) : FEM3D(params), params3d_(params) {}

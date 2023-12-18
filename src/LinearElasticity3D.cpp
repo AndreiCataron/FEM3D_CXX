@@ -20,18 +20,21 @@ Eigen::Vector3d LinearElasticity3D::h(std::vector<double> coord, const int tag) 
 
     // get normal
     std::vector<double> parametricCoord, normal;
-#pragma omp critical
-    {
+//#pragma omp critical
+//    {
         gmsh::model::getParametrization(2, tag, coord, parametricCoord);
 
         gmsh::model::getNormal(tag, parametricCoord, normal);
-    }
+//    }
 
     // convert normal to Eigen::Vector3d
     double *ptr = &normal[0];
     Eigen::Map<Eigen::Vector3d> normalConverted(ptr, 3);
+    //std::cout << "AICI: " << x << ' ' << y << ' ' << z << '\n' << stress << '\n';
 
-    return stress * normalConverted;
+    Eigen::Vector3d rez = stress * normalConverted;
+
+    return rez;
 }
 
 void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
@@ -83,10 +86,10 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
 
     auto start = std::chrono::steady_clock::now();
 
-#pragma omp parallel shared(tripletList, load_vector)
-{
+//#pragma omp parallel shared(tripletList, load_vector)
+//{
     // assemble tripletList and load vector by looping through all elements and computing the element stiffness matrix and load vector
-    #pragma omp for
+//    #pragma omp for
     for (int i = 0; i < mesh.elems.elementTags.size(); i++) {
         // get tags of nodes in current element
         std::vector<std::size_t> elementNodeTags = std::vector<std::size_t>(
@@ -143,14 +146,14 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
 
         // add triplets to tripletList
         // repeated pairs of indexes are summed up when initializing the sparse stiffness matrix
-#pragma omp critical
-        {
+//#pragma omp critical
+//        {
             for (int k = 0; k < bNoCols; k++) {
                 for (int j = 0; j < bNoCols; j++) {
                     tripletList.emplace_back(elementNodeIndexes[k], elementNodeIndexes[j], elementStiffness(k, j));
                 }
             }
-        }
+//        }
         // the vector f^k from Larson
         std::vector<double> fk;
         fk.reserve(3 * mesh.elems.noNodesPerElement);
@@ -167,12 +170,12 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
 
         Eigen::VectorXd localLoad = elementMass * fkConverted;
 
-#pragma omp critical
-        {
+//#pragma omp critical
+//        {
             load_vector(elementNodeIndexes) += localLoad;
-        }
+//        }
     }
-}
+//}
 
     auto end = std::chrono::steady_clock::now();
 
@@ -182,9 +185,9 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
 
     // neumann contribution
 
-#pragma omp parallel shared(load_vector)
-{
-    #pragma omp for
+//#pragma omp parallel shared(load_vector)
+//{
+    //#pragma omp for
     for (int i = 0; i < mesh.elems.boundaryFacesTags.size(); i++) {
         std::size_t faceTag = mesh.elems.boundaryFacesTags[i];
         if (neumannBoundaryTriangles.find(faceTag) != neumannBoundaryTriangles.end()) {
@@ -214,14 +217,14 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
                 int index = nodeIndexes[faceNodeTags[k]];
                 std::vector<int> nodeIndexes = {3 * index, 3 * index + 1, 3 * index + 2};
 
-#pragma omp critical
-                {
+//#pragma omp critical
+//                {
                     load_vector(nodeIndexes) += integral;
-                }
+//                }
             }
         }
     }
-}
+//}
 
     stiffness_matrix.setFromTriplets(tripletList.begin(), tripletList.end());
 

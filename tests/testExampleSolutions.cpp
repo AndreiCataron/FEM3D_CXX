@@ -3,6 +3,7 @@
 #include </opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3/Eigen/Dense>
 #include <memory>
 #include <vector>
+#include <gmsh.h>
 
 int main(int argc, char **argv) {
     auto exact = [] (double x, double y, double z) {return std::vector<double>{x, y, z};};
@@ -36,6 +37,8 @@ int main(int argc, char **argv) {
     });
 
     utils::checkParamsLE(*par);
+
+    std::cout << par -> lambda << ' ' << par -> mu << '\n';
 
     Eigen::initParallel();
 
@@ -89,6 +92,6 @@ int main(int argc, char **argv) {
 
 //    std::set<std::string> args(argv, argv + argc);
 //    if(!args.count("-nopopup")) gmsh::fltk::run();
-
+//
 
 }

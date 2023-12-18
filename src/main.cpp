@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
     auto g = [] (double x, double y, double z) {return std::vector<double>{x, y, z};};
 
     auto par = std::make_shared<ParamsLE>(ParamsLE{
-            0.05, // h,
+            0.1 , // h,
             10,
             1,
             "z > 0", // dirichlet BC
@@ -39,8 +39,9 @@ int main(int argc, char **argv) {
 
     utils::checkParamsLE(*par);
 
-    std::cout << "Salut " << par -> mu << '\n';
+    std::cout << par -> lambda << ' ' << par -> mu << '\n';
 
+    Eigen::initParallel();
 
     Mesh msh(argc, argv, par);
 
@@ -69,18 +70,24 @@ int main(int argc, char **argv) {
     std::cout << "Load Vector Size: " << lv.size() << '\n';
 
     start = std::chrono::steady_clock::now();
+    fem.computeL2Error();
     std::cout << "L2 error: " << fem.getL2Error();
     end = std::chrono::steady_clock::now();
     diff = end - start;
 
     std::cout << "\nL2: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
 
+    start = std::chrono::steady_clock::now();
+    fem.computeH1Error();
+    std::cout << "H1 error: " << fem.getH1Error();
+    end = std::chrono::steady_clock::now();
+    diff = end - start;
 
+    std::cout << "\nH1: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
 
-    fem.outputData("/Users/andrei/CLionProjects/FEM/outputs/out.txt");
+    std::vector<double> plane = {0, 0, 1, 0};
+    fem.outputData("/Users/andrei/CLionProjects/FEM/outputs/out.txt", true, plane);
 
 //    std::set<std::string> args(argv, argv + argc);
 //    if(!args.count("-nopopup")) gmsh::fltk::run();
-
-
 }
