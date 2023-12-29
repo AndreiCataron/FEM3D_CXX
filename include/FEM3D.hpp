@@ -63,14 +63,17 @@ public:
     // methods
     double parseExpression(const std::string&, double, double, double);
 
-    virtual void indexConstrainedNodes() = 0;
-    void indexFreeNodes();
-
-    virtual void setBoundaryConditions() = 0;
-    void setNeumannBoundaryConditions();
     // check if a node is on a part of the boundary where boundary conditions are imposed
     // return 0 if no bc are imposed, 1 for dirichlet, 2 for neumann
     int checkNodeSatisfiesBoundaryEquation(double, double, double);
+
+    void setNeumannBoundaryConditions() noexcept;
+    virtual void setDirichletBoundaryConditions() noexcept = 0;
+
+    void setBoundaryConditions() noexcept;
+    virtual void indexConstrainedNodes() noexcept = 0;
+    void indexFreeNodes() noexcept;
+
     virtual void computeStiffnessMatrixAndLoadVector() = 0;
     virtual void solveDirectProblem() = 0;
 

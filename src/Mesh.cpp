@@ -71,7 +71,10 @@ void Mesh::computeInverseJacobians() {
                            jacobian(0, 1) * jacobian(2, 0) - jacobian(0, 0) * jacobian(2, 1),
                            - jacobian(0, 1) * jacobian(1, 0) + jacobian(0, 0) * jacobian(1, 1);
 
-        elems.inverse_jacobians.emplace_back(1 / elems.determinants[i] * inverseJacobian);
+        inverseJacobian = 1 / elems.determinants[i] * inverseJacobian;
+        inverseJacobian.transposeInPlace();
+
+        elems.inverse_jacobians.emplace_back(inverseJacobian);
     }
 }
 
@@ -155,7 +158,9 @@ void Mesh::initMesh() {
 
     // get jacobians of triangles
     std::vector<double> triangleJacobianCoords = {0.25, 0.25, 0}, triangleDeterminants, triangleJacobians, triangleGlobalCoords;
+    gmsh::model::mesh::preallocateJacobians(elems.triangleElementType, 1, false, true, false, triangleJacobians, elems.trianglesDeterminants, triangleGlobalCoords);
     gmsh::model::mesh::getJacobians(elems.triangleElementType, triangleJacobianCoords, triangleJacobians, elems.trianglesDeterminants, triangleGlobalCoords);
+    gmsh::model::mesh::preallocateJacobians(elems.triangleElementType, int(elems.triangleLocalCoord.size()), false, true, true, triangleJacobians, triangleDeterminants, elems.trianglesGlobalCoord);
     gmsh::model::mesh::getJacobians(elems.triangleElementType, elems.triangleLocalCoord, triangleJacobians, triangleDeterminants, elems.trianglesGlobalCoord);
 
     // get the determinant of the jacobian of each element
@@ -176,4 +181,9 @@ void Mesh::initMesh() {
     gmsh::model::mesh::getJacobians(elems.elementType, elems.localCoord, dummyJacobians, dummyDeterminants, elems.globalCoord);
 
     computeInverseJacobians();
+}
+
+void Mesh::showMesh(int argc, char **argv) {
+    std::set<std::string> args(argv, argv + argc);
+    if(!args.count("-nopopup")) gmsh::fltk::run();
 }

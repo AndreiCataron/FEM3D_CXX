@@ -14,7 +14,7 @@ public:
     explicit LinearElasticity3D(std::shared_ptr<ParamsLE> const&);
     LinearElasticity3D(std::shared_ptr<ParamsLE> const&, Mesh&);
 
-    Eigen::Vector3d h(std::vector<double>, int);
+    Eigen::Vector3d h(std::vector<double>&, int);
     void computeStiffnessMatrixAndLoadVector() override;
     void solveDirectProblem() override;
 };

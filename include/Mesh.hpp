@@ -8,12 +8,14 @@
 #include "params.hpp"
 #include "utils.hpp"
 
+using CoordTuple = std::tuple<double, double, double>;
+
 class Mesh {
 public:
     // mesh elements
     struct MeshElements {
         // store for each node [tag : coordinates]
-        std::unordered_map<std::size_t, std::tuple<double, double, double> > node_coordinates = {};
+        std::unordered_map<std::size_t, CoordTuple> node_coordinates = {};
 
         std::vector<std::size_t> boundaryFacesTags = {}, boundaryFacesNodes = {};
 
@@ -81,6 +83,7 @@ public:
     static void cubeMesh();
     void computeInverseJacobians();
     void initMesh();
+    static void showMesh(int, char**);
 };
 
 

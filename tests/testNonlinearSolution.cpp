@@ -29,12 +29,31 @@ int main(int argc, char **argv) {
                                    (1 + nu) / E * (- x - nu * y * z)};
     };
 
+    auto par = std::make_shared<ParamsLE>(ParamsLE{
+            0.1 , // h,
+            10,
+            1,
+            "z > 0", // dirichlet BC
+            "z == 0", // neumann BC
+            3, // quadrature precision
+            3, // triangle quadrature precision
+            2, // order of lagrange polynomials
+            exact, // exact
+            grad, // solution gradient
+            f, // f
+            g, // g
+            -1, // lambda
+            -1, // mu
+            0.33, // nu
+            70.0 // E
+    });
+
 //    auto par = std::make_shared<ParamsLE>(ParamsLE{
-//            0.025 , // h,
+//            0.1 , // h,
 //            10,
 //            1,
-//            "z > 0", // dirichlet BC
-//            "z == 0", // neumann BC
+//            "y < 1", // dirichlet BC
+//            "y == 1", // neumann BC
 //            3, // quadrature precision
 //            2, // triangle quadrature precision
 //            1, // order of lagrange polynomials
@@ -47,25 +66,6 @@ int main(int argc, char **argv) {
 //            0.33, // nu
 //            70.0 // E
 //    });
-
-    auto par = std::make_shared<ParamsLE>(ParamsLE{
-            0.1 , // h,
-            10,
-            1,
-            "y < 1", // dirichlet BC
-            "y == 1", // neumann BC
-            3, // quadrature precision
-            2, // triangle quadrature precision
-            1, // order of lagrange polynomials
-            exact, // exact
-            grad, // solution gradient
-            f, // f
-            g, // g
-            -1, // lambda
-            -1, // mu
-            0.33, // nu
-            70.0 // E
-    });
 
     utils::checkParamsLE(*par);
 
@@ -116,8 +116,8 @@ int main(int argc, char **argv) {
 
     std::cout << "\nH1: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
 
-    std::vector<double> plane = {0, 1, 0, 0};
+    //std::vector<double> plane = {0, 1, 0, 0};
+    std::vector<double> plane = {0, 0, 1, 0};
     fem.outputData("/Users/andrei/CLionProjects/FEM/outputs/out.txt", true, plane);
-
 
 }

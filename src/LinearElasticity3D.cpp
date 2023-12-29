@@ -5,11 +5,11 @@
 #include <gmsh.h>
 #include <eigen3/Eigen/IterativeLinearSolvers>
 
-LinearElasticity3D::LinearElasticity3D(std::shared_ptr<ParamsLE> const &params) : FEM3DVector(params), paramsLE_(params) {}
+LinearElasticity3D::LinearElasticity3D(std::shared_ptr<ParamsLE> const& params) : FEM3DVector(params), paramsLE_(params) {}
 
-LinearElasticity3D::LinearElasticity3D(std::shared_ptr<ParamsLE> const &params, Mesh &msh) : FEM3DVector(params, msh), paramsLE_(params) {}
+LinearElasticity3D::LinearElasticity3D(std::shared_ptr<ParamsLE> const& params, Mesh &msh) : FEM3DVector(params, msh), paramsLE_(params) {}
 
-Eigen::Vector3d LinearElasticity3D::h(std::vector<double> coord, const int tag) {
+Eigen::Vector3d LinearElasticity3D::h(std::vector<double>& coord, const int tag) {
     // compute strain tensor
     double x = coord[0], y = coord[1], z = coord[2];
     Eigen::Matrix3d strain = 0.5 * (paramsLE_ -> solution_gradient(x, y, z) + (paramsLE_ -> solution_gradient(x, y, z)).transpose());
@@ -20,17 +20,14 @@ Eigen::Vector3d LinearElasticity3D::h(std::vector<double> coord, const int tag) 
 
     // get normal
     std::vector<double> parametricCoord, normal;
-//#pragma omp critical
-//    {
-        gmsh::model::getParametrization(2, tag, coord, parametricCoord);
 
-        gmsh::model::getNormal(tag, parametricCoord, normal);
-//    }
+    gmsh::model::getParametrization(2, tag, coord, parametricCoord);
+
+    gmsh::model::getNormal(tag, parametricCoord, normal);
 
     // convert normal to Eigen::Vector3d
     double *ptr = &normal[0];
     Eigen::Map<Eigen::Vector3d> normalConverted(ptr, 3);
-    //std::cout << "AICI: " << x << ' ' << y << ' ' << z << '\n' << stress << '\n';
 
     Eigen::Vector3d rez = stress * normalConverted;
 
@@ -67,7 +64,7 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
     for (int i = 0; i < mesh.elems.noIntegrationPoints; i++) {
         Eigen::MatrixXd Mktemp = Eigen::MatrixXd::Zero(3 * mesh.elems.noNodesPerElement, 3);
         for (int j = 0; j < mesh.elems.noNodesPerElement; j++) {
-            Eigen::MatrixXd basisFunctionMatrix = Eigen::MatrixXd::Zero(3, 3);
+            Eigen::Matrix3d basisFunctionMatrix = Eigen::Matrix3d::Zero();
             basisFunctionMatrix(0, 0) = mesh.elems.basisFunctionsValues[i * mesh.elems.noNodesPerElement + j];
             basisFunctionMatrix(1, 1) = mesh.elems.basisFunctionsValues[i * mesh.elems.noNodesPerElement + j];
             basisFunctionMatrix(2, 2) = mesh.elems.basisFunctionsValues[i * mesh.elems.noNodesPerElement + j];
@@ -86,10 +83,7 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
 
     auto start = std::chrono::steady_clock::now();
 
-//#pragma omp parallel shared(tripletList, load_vector)
-//{
     // assemble tripletList and load vector by looping through all elements and computing the element stiffness matrix and load vector
-//    #pragma omp for
     for (int i = 0; i < mesh.elems.elementTags.size(); i++) {
         // get tags of nodes in current element
         std::vector<std::size_t> elementNodeTags = std::vector<std::size_t>(
@@ -98,7 +92,6 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
 
         // compute element stiffness matrix
         Eigen::MatrixXd K = Eigen::MatrixXd::Zero(bNoCols, bNoCols);
-
 
         for (int j = 0; j < mesh.elems.noIntegrationPoints; j++) {
             Eigen::MatrixXd B = Eigen::MatrixXd::Zero(6, bNoCols);
@@ -109,28 +102,26 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
                                   mesh.elems.basisFunctionsGradients[j * 3 * mesh.elems.noNodesPerElement + 3 * k + 1],
                                   mesh.elems.basisFunctionsGradients[j * 3 * mesh.elems.noNodesPerElement + 3 * k + 2];
 
-                elementGrads = mesh.elems.inverse_jacobians[i].transpose() * referenceGrads;
-                double a = elementGrads(0), b = elementGrads(1), c = elementGrads(2);
+                elementGrads = mesh.elems.inverse_jacobians[i] * referenceGrads;
 
-                B(0, 3 * k) = a;
-                B(1, 3 * k + 1) = b;
-                B(2, 3 * k + 2) = c;
-                B(3, 3 * k) = b;
-                B(3, 3 * k + 1) = a;
-                B(4, 3 * k + 1) = c;
-                B(4, 3 * k + 2) = b;
-                B(5, 3 * k) = c;
-                B(5, 3 * k + 2) = a;
+                B(0, 3 * k) = elementGrads(0);
+                B(1, 3 * k + 1) = elementGrads(1);
+                B(2, 3 * k + 2) = elementGrads(2);
+                B(3, 3 * k) = elementGrads(1);
+                B(3, 3 * k + 1) = elementGrads(0);
+                B(4, 3 * k + 1) = elementGrads(2);
+                B(4, 3 * k + 2) = elementGrads(1);
+                B(5, 3 * k) = elementGrads(2);
+                B(5, 3 * k + 2) = elementGrads(0);
             }
 
-            Eigen::MatrixXd Ktemp = B.transpose() * D * B;
-            K = K + mesh.elems.weights[j] * Ktemp;
+            K = K + mesh.elems.weights[j] * B.transpose() * D * B;
         }
 
         double det = mesh.elems.determinants[i];
 
-        Eigen::MatrixXd elementStiffness = det * K;
-        Eigen::MatrixXd elementMass = det * Mk;
+        // Eigen::MatrixXd elementStiffness = det * K;
+        // Eigen::MatrixXd elementMass = det * Mk;
 
         // find stiffness and load indexes for the displacements in the element
         std::vector<int> elementNodeIndexes;
@@ -146,21 +137,21 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
 
         // add triplets to tripletList
         // repeated pairs of indexes are summed up when initializing the sparse stiffness matrix
-//#pragma omp critical
-//        {
-            for (int k = 0; k < bNoCols; k++) {
-                for (int j = 0; j < bNoCols; j++) {
-                    tripletList.emplace_back(elementNodeIndexes[k], elementNodeIndexes[j], elementStiffness(k, j));
-                }
+        for (int k = 0; k < bNoCols; k++) {
+            for (int j = 0; j < bNoCols; j++) {
+                tripletList.emplace_back(elementNodeIndexes[k], elementNodeIndexes[j], det * K(k, j));
             }
-//        }
+        }
+
         // the vector f^k from Larson
         std::vector<double> fk;
         fk.reserve(3 * mesh.elems.noNodesPerElement);
         for (const auto &tag: elementNodeTags) {
-            std::tuple<double, double, double> nodeCoord = mesh.elems.node_coordinates[tag];
+            // std::tuple<double, double, double> nodeCoord = mesh.elems.node_coordinates[tag];
 
-            for (auto component: paramsLE_->f(std::get<0>(nodeCoord), std::get<1>(nodeCoord), std::get<2>(nodeCoord))) {
+            for (auto component: paramsLE_ -> f(std::get<0>(mesh.elems.node_coordinates[tag]),
+                                                std::get<1>(mesh.elems.node_coordinates[tag]),
+                                                std::get<2>(mesh.elems.node_coordinates[tag]))) {
                 fk.emplace_back(component);
             }
         }
@@ -168,14 +159,11 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
         double *ptr = &fk[0];
         Eigen::Map<Eigen::VectorXd> fkConverted(ptr, int(fk.size()));
 
-        Eigen::VectorXd localLoad = elementMass * fkConverted;
+        // Eigen::VectorXd localLoad = elementMass * fkConverted;
 
-//#pragma omp critical
-//        {
-            load_vector(elementNodeIndexes) += localLoad;
-//        }
+
+        load_vector(elementNodeIndexes) = load_vector(elementNodeIndexes) + det * Mk * fkConverted;
     }
-//}
 
     auto end = std::chrono::steady_clock::now();
 
@@ -184,10 +172,6 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
     std::cout << "STIFF 1: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
 
     // neumann contribution
-
-//#pragma omp parallel shared(load_vector)
-//{
-    //#pragma omp for
     for (int i = 0; i < mesh.elems.boundaryFacesTags.size(); i++) {
         std::size_t faceTag = mesh.elems.boundaryFacesTags[i];
         if (neumannBoundaryTriangles.find(faceTag) != neumannBoundaryTriangles.end()) {
@@ -219,7 +203,7 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
 
 //#pragma omp critical
 //                {
-                    load_vector(nodeIndexes) += integral;
+                    load_vector(nodeIndexes) = load_vector(nodeIndexes) + integral;
 //                }
             }
         }
@@ -252,12 +236,12 @@ void LinearElasticity3D::solveDirectProblem() {
 
     displacements.head(3 * constrainedNodes.size()) = constrainedValues;
 
-    load_vector = load_vector.tail(3 * freeNodes.size()) -
-            stiffness_matrix.bottomRows(3 * freeNodes.size()).leftCols(3 * constrainedNodes.size()) * constrainedValues;
+    load_vector = (load_vector.tail(3 * freeNodes.size()) -
+            stiffness_matrix.bottomRows(3 * freeNodes.size()).leftCols(3 * constrainedNodes.size()) * constrainedValues).eval();
 
-    stiffness_matrix = stiffness_matrix.bottomRightCorner(3 * freeNodes.size(), 3 * freeNodes.size());
+    stiffness_matrix = stiffness_matrix.bottomRightCorner(3 * freeNodes.size(), 3 * freeNodes.size()).eval();
 
-    Eigen::ConjugateGradient<Eigen::SparseMatrix<double> > solver;
+    Eigen::ConjugateGradient<Eigen::SparseMatrix<double>, Eigen::Lower|Eigen::Upper> solver;
 
     auto start = std::chrono::steady_clock::now();
 

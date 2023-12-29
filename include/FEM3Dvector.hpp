@@ -18,10 +18,10 @@ public:
     explicit FEM3DVector(std::shared_ptr<ParamsVector> const&);
     FEM3DVector(std::shared_ptr<ParamsVector> const&, Mesh&);
 
-    void setBoundaryConditions() override;
-    void indexConstrainedNodes() override;
+    void setDirichletBoundaryConditions() noexcept override;
+    void indexConstrainedNodes() noexcept override;
 
-    void outputData(std::string, bool bounadryError = false, std::vector<double> plane = {}) override;
+    void outputData(std::string, bool, std::vector<double>) override;
 
     void computeL2Error() override;
     void computeH1Error() override;

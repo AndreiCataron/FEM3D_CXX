@@ -4,13 +4,11 @@
 #include <fstream>
 #include <iostream>
 
-FEM3DVector::FEM3DVector(std::shared_ptr<ParamsVector> const &params) : FEM3D(params), params3d_(params) {}
+FEM3DVector::FEM3DVector(std::shared_ptr<ParamsVector> const& params) : FEM3D(params), params3d_(params) {}
 
-FEM3DVector::FEM3DVector(std::shared_ptr<ParamsVector> const &params, Mesh &msh) : FEM3D(params, msh), params3d_(params){}
+FEM3DVector::FEM3DVector(std::shared_ptr<ParamsVector> const& params, Mesh& msh) : FEM3D(params, msh), params3d_(params){}
 
-void FEM3DVector::setBoundaryConditions() {
-    setNeumannBoundaryConditions();
-
+void FEM3DVector::setDirichletBoundaryConditions() noexcept {
     for (auto b : mesh.elems.boundary) {
         std::vector<std::size_t> tags;
         std::vector<double> coord, param_coords;
@@ -21,7 +19,7 @@ void FEM3DVector::setBoundaryConditions() {
             int bc = checkNodeSatisfiesBoundaryEquation(coord[3 * i], coord[3 * i + 1], coord[3 * i + 2]);
 
             if (bc == 1) {
-                if (dirichlet_bc.find(tag) == dirichlet_bc.end()) {
+                if (dirichlet_bc.find(tag) == dirichlet_bc.cend()) {
                     std::vector<double> prescribed_condition;
                     prescribed_condition.reserve(3);
 
@@ -32,15 +30,12 @@ void FEM3DVector::setBoundaryConditions() {
             }
         }
     }
-
-    indexConstrainedNodes();
-    indexFreeNodes();
 }
 
-void FEM3DVector::indexConstrainedNodes() {
+void FEM3DVector::indexConstrainedNodes() noexcept {
     for (const auto& n : dirichlet_bc) {
         // check node is not already in node indexes
-        if (nodeIndexes.find(n.first) == nodeIndexes.end()) {
+        if (nodeIndexes.find(n.first) == nodeIndexes.cend()) {
             constrainedNodes.emplace_back(nodeIndexes.size());
             nodeIndexes[n.first] = int(nodeIndexes.size());
         }
@@ -203,15 +198,14 @@ void FEM3DVector::computeH1Error() {
                                   mesh.elems.basisFunctionsGradients[j * 3 * mesh.elems.noNodesPerElement + 3 * k + 1],
                                   mesh.elems.basisFunctionsGradients[j * 3 * mesh.elems.noNodesPerElement + 3 * k + 2];
 
-                elementGrads = mesh.elems.inverse_jacobians[i].transpose() * referenceGrads;
-                elementGrads = elementGrads.transpose();
+                elementGrads = mesh.elems.inverse_jacobians[i] * referenceGrads;
 
                 std::size_t tag = elementNodeTags[k];
                 int index = nodeIndexes[tag];
 
-                approxGradient.row(0) += displacements(3 * index) * elementGrads;
-                approxGradient.row(1) += displacements(3 * index + 1) * elementGrads;
-                approxGradient.row(2) += displacements(3 * index + 2) * elementGrads;
+                approxGradient.row(0) += displacements(3 * index) * elementGrads.transpose();
+                approxGradient.row(1) += displacements(3 * index + 1) * elementGrads.transpose();
+                approxGradient.row(2) += displacements(3 * index + 2) * elementGrads.transpose();
             }
 
             for (int u = 0; u < 3; u++) {

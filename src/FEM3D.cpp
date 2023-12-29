@@ -9,12 +9,12 @@ typedef exprtk::symbol_table<double> symbol_table_t;
 typedef exprtk::expression<double>   expression_t;
 typedef exprtk::parser<double>       parser_t;
 
-FEM3D::FEM3D(std::shared_ptr<Params> const &params) : params_(params){
+FEM3D::FEM3D(std::shared_ptr<Params> const& params) : params_(params){
     Mesh msh;
     mesh = msh;
 }
 
-FEM3D::FEM3D(std::shared_ptr<Params> const &params, Mesh &msh) : params_(params), mesh(msh) {
+FEM3D::FEM3D(std::shared_ptr<Params> const& params, Mesh& msh) : params_(params), mesh(msh) {
     // used for parsing logical expressions i.e. boundary conditions
     symbol_table.add_variable("x", _x);
     symbol_table.add_variable("y", _y);
@@ -24,7 +24,7 @@ FEM3D::FEM3D(std::shared_ptr<Params> const &params, Mesh &msh) : params_(params)
     expression.register_symbol_table(symbol_table);
 }
 
-double FEM3D::parseExpression(const std::string &exp, double xx, double yy, double zz) {
+double FEM3D::parseExpression(const std::string& exp, double xx, double yy, double zz) {
     parser.compile(exp, expression);
 
     _x = xx; _y = yy; _z = zz;
@@ -52,23 +52,23 @@ int FEM3D::checkNodeSatisfiesBoundaryEquation(double nx, double ny, double nz) {
     return 0;
 }
 
-void FEM3D::setNeumannBoundaryConditions() {
-    for (auto b : mesh.elems.boundary) {
+void FEM3D::setNeumannBoundaryConditions() noexcept {
+    for (const auto& b : mesh.elems.boundary) {
         std::vector<int> elementTypes;
         std::vector<std::vector<std::size_t> > elementTags, nodeTags;
         gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, b.first, b.second);
 
-        mesh.elems.boundaryFacesTags.insert(mesh.elems.boundaryFacesTags.end(), elementTags[0].begin(), elementTags[0].end());
-        mesh.elems.boundaryFacesNodes.insert(mesh.elems.boundaryFacesNodes.end(), nodeTags[0].begin(), nodeTags[0].end());
+        mesh.elems.boundaryFacesTags.insert(mesh.elems.boundaryFacesTags.cend(), elementTags[0].cbegin(), elementTags[0].cend());
+        mesh.elems.boundaryFacesNodes.insert(mesh.elems.boundaryFacesNodes.cend(), nodeTags[0].cbegin(), nodeTags[0].cend());
 
-        for (int i = 0; i < elementTags[0].size(); i++) {
+        for (std::size_t i = 0; i < elementTags[0].size(); i++) {
             std::size_t triangleTag = elementTags[0][i];
-            std::vector<std::size_t> faceNodeTags = std::vector<std::size_t>(nodeTags[0].begin() + i * mesh.elems.noNodesPerTriangle,
-                                                                             nodeTags[0].begin() + (i + 1) * mesh.elems.noNodesPerTriangle);
+            std::vector<std::size_t> faceNodeTags = std::vector<std::size_t>(nodeTags[0].cbegin() + int(i) * mesh.elems.noNodesPerTriangle,
+                                                                             nodeTags[0].cbegin() + int(i + 1) * mesh.elems.noNodesPerTriangle);
 
             bool ok = true;
-            for (auto tag : faceNodeTags) {
-                std::tuple<double, double, double> coord = mesh.elems.node_coordinates[tag];
+            for (const auto& tag : faceNodeTags) {
+                CoordTuple coord = mesh.elems.node_coordinates[tag];
                 int bc = checkNodeSatisfiesBoundaryEquation(std::get<0>(coord), std::get<1>(coord), std::get<2>(coord));
 
                 if (bc != 2) {
@@ -85,16 +85,23 @@ void FEM3D::setNeumannBoundaryConditions() {
     }
 }
 
-void FEM3D::indexFreeNodes() {
+void FEM3D::setBoundaryConditions() noexcept {
+    setNeumannBoundaryConditions();
+    setDirichletBoundaryConditions();
+    indexConstrainedNodes();
+    indexFreeNodes();
+}
+
+void FEM3D::indexFreeNodes() noexcept {
     // get nodes
     std::vector<std::size_t> nodeTags;
     std::vector<double> coord, parametricCoord;
 
     gmsh::model::mesh::getNodes(nodeTags, coord, parametricCoord, -1, -1, true, false);
 
-    for (auto tag : nodeTags) {
+    for (const auto& tag : nodeTags) {
         // check node with tag is not constrained i.e. already in nodeIndexes
-        if (nodeIndexes.find(tag) == nodeIndexes.end()) {
+        if (nodeIndexes.find(tag) == nodeIndexes.cend()) {
             freeNodes.emplace_back(nodeIndexes.size());
             nodeIndexes[tag] = int(nodeIndexes.size());
         }

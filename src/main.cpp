@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
     auto g = [] (double x, double y, double z) {return std::vector<double>{x, y, z};};
 
     auto par = std::make_shared<ParamsLE>(ParamsLE{
-            0.1 , // h,
+            0.2 , // h,
             10,
             1,
             "z > 0", // dirichlet BC
@@ -84,6 +84,13 @@ int main(int argc, char **argv) {
     diff = end - start;
 
     std::cout << "\nH1: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
+
+    std::cout << fem.getStiffnessMatrix().topLeftCorner(10, 10) << '\n';
+
+    Eigen::LLT<Eigen::MatrixXd> A_llt(fem.getStiffnessMatrix());
+    if (!fem.getStiffnessMatrix().isApprox(fem.getStiffnessMatrix().transpose()) || A_llt.info() == Eigen::NumericalIssue) {
+        throw std::runtime_error("Possibly non semi-positive definitie matrix!");
+    }
 
     std::vector<double> plane = {0, 0, 1, 0};
     fem.outputData("/Users/andrei/CLionProjects/FEM/outputs/out.txt", true, plane);
