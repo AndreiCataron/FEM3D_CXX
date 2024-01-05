@@ -7,7 +7,7 @@
 
 LinearElasticity3D::LinearElasticity3D(std::shared_ptr<ParamsLE> const& params) : FEM3DVector(params), paramsLE_(params) {}
 
-LinearElasticity3D::LinearElasticity3D(std::shared_ptr<ParamsLE> const& params, Mesh &msh) : FEM3DVector(params, msh), paramsLE_(params) {}
+LinearElasticity3D::LinearElasticity3D(std::shared_ptr<ParamsLE> const& params, std::shared_ptr<Mesh> const& msh) : FEM3DVector(params, msh), paramsLE_(params) {}
 
 Eigen::Vector3d LinearElasticity3D::h(std::vector<double>& coord, const int tag) {
     // compute strain tensor
@@ -55,22 +55,22 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
     int noNodes = int(tags.size());
 
     // number of columns of the strain matrix B introduced in Larson page 267
-    int bNoCols = 3 * mesh.elems.noNodesPerElement;
+    int bNoCols = 3 * mesh -> elems.noNodesPerElement;
 
     // computation of the matrix M^k from Larson page 270
 
-    Eigen::MatrixXd Mk(3 * mesh.elems.noNodesPerElement, 3 * mesh.elems.noNodesPerElement);
+    Eigen::MatrixXd Mk(3 * mesh -> elems.noNodesPerElement, 3 * mesh -> elems.noNodesPerElement);
 
-    for (int i = 0; i < mesh.elems.noIntegrationPoints; i++) {
-        Eigen::MatrixXd Mktemp = Eigen::MatrixXd::Zero(3 * mesh.elems.noNodesPerElement, 3);
-        for (int j = 0; j < mesh.elems.noNodesPerElement; j++) {
+    for (int i = 0; i < mesh -> elems.noIntegrationPoints; i++) {
+        Eigen::MatrixXd Mktemp = Eigen::MatrixXd::Zero(3 * mesh -> elems.noNodesPerElement, 3);
+        for (int j = 0; j < mesh -> elems.noNodesPerElement; j++) {
             Eigen::Matrix3d basisFunctionMatrix = Eigen::Matrix3d::Zero();
-            basisFunctionMatrix(0, 0) = mesh.elems.basisFunctionsValues[i * mesh.elems.noNodesPerElement + j];
-            basisFunctionMatrix(1, 1) = mesh.elems.basisFunctionsValues[i * mesh.elems.noNodesPerElement + j];
-            basisFunctionMatrix(2, 2) = mesh.elems.basisFunctionsValues[i * mesh.elems.noNodesPerElement + j];
+            basisFunctionMatrix(0, 0) = mesh -> elems.basisFunctionsValues[i * mesh -> elems.noNodesPerElement + j];
+            basisFunctionMatrix(1, 1) = mesh -> elems.basisFunctionsValues[i * mesh -> elems.noNodesPerElement + j];
+            basisFunctionMatrix(2, 2) = mesh -> elems.basisFunctionsValues[i * mesh -> elems.noNodesPerElement + j];
             Mktemp.block<3, 3>(3 * j, 0) = basisFunctionMatrix;
         }
-        Mk = Mk + mesh.elems.weights[i] * (Mktemp * Mktemp.transpose());
+        Mk = Mk + mesh -> elems.weights[i] * (Mktemp * Mktemp.transpose());
     }
 
     // initialize load vector
@@ -78,31 +78,31 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
 
     // initialize stiffness matrix as Eigen Sparse Matrix
     std::vector<Eigen::Triplet<double> > tripletList;
-    tripletList.reserve(mesh.elems.elementTags.size() * bNoCols * bNoCols);
+    tripletList.reserve(mesh -> elems.elementTags.size() * bNoCols * bNoCols);
     stiffness_matrix.resize(3 * noNodes, 3 * noNodes);
 
     auto start = std::chrono::steady_clock::now();
 
     // assemble tripletList and load vector by looping through all elements and computing the element stiffness matrix and load vector
-    for (int i = 0; i < mesh.elems.elementTags.size(); i++) {
+    for (int i = 0; i < mesh -> elems.elementTags.size(); i++) {
         // get tags of nodes in current element
         std::vector<std::size_t> elementNodeTags = std::vector<std::size_t>(
-                mesh.elems.nodeTags.begin() + i * mesh.elems.noNodesPerElement,
-                mesh.elems.nodeTags.begin() + (i + 1) * mesh.elems.noNodesPerElement);
+                mesh -> elems.nodeTags.begin() + i * mesh -> elems.noNodesPerElement,
+                mesh -> elems.nodeTags.begin() + (i + 1) * mesh -> elems.noNodesPerElement);
 
         // compute element stiffness matrix
         Eigen::MatrixXd K = Eigen::MatrixXd::Zero(bNoCols, bNoCols);
 
-        for (int j = 0; j < mesh.elems.noIntegrationPoints; j++) {
+        for (int j = 0; j < mesh -> elems.noIntegrationPoints; j++) {
             Eigen::MatrixXd B = Eigen::MatrixXd::Zero(6, bNoCols);
 
-            for (int k = 0; k < mesh.elems.noNodesPerElement; k++) {
+            for (int k = 0; k < mesh -> elems.noNodesPerElement; k++) {
                 Eigen::Vector3d referenceGrads, elementGrads;
-                referenceGrads << mesh.elems.basisFunctionsGradients[j * 3 * mesh.elems.noNodesPerElement + 3 * k],
-                                  mesh.elems.basisFunctionsGradients[j * 3 * mesh.elems.noNodesPerElement + 3 * k + 1],
-                                  mesh.elems.basisFunctionsGradients[j * 3 * mesh.elems.noNodesPerElement + 3 * k + 2];
+                referenceGrads << mesh -> elems.basisFunctionsGradients[j * 3 * mesh -> elems.noNodesPerElement + 3 * k],
+                                  mesh -> elems.basisFunctionsGradients[j * 3 * mesh -> elems.noNodesPerElement + 3 * k + 1],
+                                  mesh -> elems.basisFunctionsGradients[j * 3 * mesh -> elems.noNodesPerElement + 3 * k + 2];
 
-                elementGrads = mesh.elems.inverse_jacobians[i] * referenceGrads;
+                elementGrads = mesh -> elems.inverse_jacobians[i] * referenceGrads;
 
                 B(0, 3 * k) = elementGrads(0);
                 B(1, 3 * k + 1) = elementGrads(1);
@@ -115,17 +115,17 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
                 B(5, 3 * k + 2) = elementGrads(0);
             }
 
-            K = K + mesh.elems.weights[j] * B.transpose() * D * B;
+            K = K + mesh -> elems.weights[j] * B.transpose() * D * B;
         }
 
-        double det = mesh.elems.determinants[i];
+        double det = mesh -> elems.determinants[i];
 
         // Eigen::MatrixXd elementStiffness = det * K;
         // Eigen::MatrixXd elementMass = det * Mk;
 
         // find stiffness and load indexes for the displacements in the element
         std::vector<int> elementNodeIndexes;
-        elementNodeIndexes.reserve(3 * mesh.elems.noNodesPerElement);
+        elementNodeIndexes.reserve(3 * mesh -> elems.noNodesPerElement);
 
         for (const auto &tag: elementNodeTags) {
             int index = nodeIndexes[tag];
@@ -145,13 +145,13 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
 
         // the vector f^k from Larson
         std::vector<double> fk;
-        fk.reserve(3 * mesh.elems.noNodesPerElement);
+        fk.reserve(3 * mesh -> elems.noNodesPerElement);
         for (const auto &tag: elementNodeTags) {
-            // std::tuple<double, double, double> nodeCoord = mesh.elems.node_coordinates[tag];
+            // std::tuple<double, double, double> nodeCoord = mesh -> elems.node_coordinates[tag];
 
-            for (auto component: paramsLE_ -> f(std::get<0>(mesh.elems.node_coordinates[tag]),
-                                                std::get<1>(mesh.elems.node_coordinates[tag]),
-                                                std::get<2>(mesh.elems.node_coordinates[tag]))) {
+            for (auto component: paramsLE_ -> f(std::get<0>(mesh -> elems.node_coordinates[tag]),
+                                                std::get<1>(mesh -> elems.node_coordinates[tag]),
+                                                std::get<2>(mesh -> elems.node_coordinates[tag]))) {
                 fk.emplace_back(component);
             }
         }
@@ -172,31 +172,31 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
     std::cout << "STIFF 1: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
 
     // neumann contribution
-    for (int i = 0; i < mesh.elems.boundaryFacesTags.size(); i++) {
-        std::size_t faceTag = mesh.elems.boundaryFacesTags[i];
+    for (int i = 0; i < mesh -> elems.boundaryFacesTags.size(); i++) {
+        std::size_t faceTag = mesh -> elems.boundaryFacesTags[i];
         if (neumannBoundaryTriangles.find(faceTag) != neumannBoundaryTriangles.end()) {
             std::vector<std::size_t> faceNodeTags = std::vector<std::size_t>(
-                    mesh.elems.boundaryFacesNodes.begin() + i * mesh.elems.noNodesPerTriangle,
-                    mesh.elems.boundaryFacesNodes.begin() + (i + 1) * mesh.elems.noNodesPerTriangle);
+                    mesh -> elems.boundaryFacesNodes.begin() + i * mesh -> elems.noNodesPerTriangle,
+                    mesh -> elems.boundaryFacesNodes.begin() + (i + 1) * mesh -> elems.noNodesPerTriangle);
 
             // compute integral of h * phi for all basis functions
-            for (int k = 0; k < mesh.elems.noNodesPerTriangle; k++) {
+            for (int k = 0; k < mesh -> elems.noNodesPerTriangle; k++) {
                 Eigen::Vector3d integral = Eigen::Vector3d::Zero();
 
-                for (int j = 0; j < mesh.elems.triangleNoIntegrationPoints; j++) {
-                    //std::cout << mesh.elems.trianglesGlobalCoord.size() << '\n';
+                for (int j = 0; j < mesh -> elems.triangleNoIntegrationPoints; j++) {
+                    //std::cout << mesh -> elems.trianglesGlobalCoord.size() << '\n';
                     std::vector<double> coord = std::vector<double>(
-                            mesh.elems.trianglesGlobalCoord.begin() +
-                            i * 3 * mesh.elems.triangleNoIntegrationPoints + 3 * j,
-                            mesh.elems.trianglesGlobalCoord.begin() +
-                            i * 3 * mesh.elems.triangleNoIntegrationPoints + 3 * j + 3);
+                            mesh -> elems.trianglesGlobalCoord.begin() +
+                            i * 3 * mesh -> elems.triangleNoIntegrationPoints + 3 * j,
+                            mesh -> elems.trianglesGlobalCoord.begin() +
+                            i * 3 * mesh -> elems.triangleNoIntegrationPoints + 3 * j + 3);
 
-                    integral += mesh.elems.triangleWeights[j] *
-                                mesh.elems.triangleBasisFunctionsValues[j * mesh.elems.noNodesPerTriangle + k] *
+                    integral += mesh -> elems.triangleWeights[j] *
+                                mesh -> elems.triangleBasisFunctionsValues[j * mesh -> elems.noNodesPerTriangle + k] *
                                 h(coord, int(neumannBoundaryTriangles[faceTag]));
                 }
 
-                integral *= mesh.elems.trianglesDeterminants[i];
+                integral *= mesh -> elems.trianglesDeterminants[i];
 
                 int index = nodeIndexes[faceNodeTags[k]];
                 std::vector<int> nodeIndexes = {3 * index, 3 * index + 1, 3 * index + 2};

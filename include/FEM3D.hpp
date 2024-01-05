@@ -36,7 +36,7 @@ private:
 
 protected:
     // the mesh
-    Mesh mesh;
+    std::shared_ptr<Mesh> mesh;
     // dictionary of type tag : index
     std::unordered_map<std::size_t, int> nodeIndexes;
     // indexes of constrained nodes
@@ -58,7 +58,7 @@ protected:
 public:
     // constructors
     explicit FEM3D(std::shared_ptr<Params> const&);
-    FEM3D(std::shared_ptr<Params> const&, Mesh&);
+    FEM3D(std::shared_ptr<Params> const&, std::shared_ptr<Mesh> const&);
 
     // methods
     double parseExpression(const std::string&, double, double, double);
@@ -89,8 +89,8 @@ public:
     Eigen::SparseMatrix<double> getStiffnessMatrix();
     Eigen::VectorXd getLoadVector();
     Eigen::VectorXd getDisplacements();
-    double getL2Error() const;
-    double getH1Error() const;
+    [[nodiscard]] double getL2Error() const;
+    [[nodiscard]] double getH1Error() const;
 };
 
 #endif

@@ -43,10 +43,10 @@ int main(int argc, char **argv) {
 
     Eigen::initParallel();
 
-    Mesh msh(argc, argv, par);
+    auto msh = std::make_shared<Mesh>(argc, argv, par);
 
     Mesh::cubeMesh();
-    msh.initMesh();
+    msh -> initMesh();
 
     LinearElasticity3D fem(par, msh);
 

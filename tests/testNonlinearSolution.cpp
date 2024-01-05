@@ -74,10 +74,10 @@ int main(int argc, char **argv) {
     std::cout << "Salut neliniar " << par -> exact_solution(1, 1, 1)[0] << '\n';
 
 
-    Mesh msh(argc, argv, par);
+    auto msh = std::make_shared<Mesh>(argc, argv, par);
 
     Mesh::cubeMesh();
-    msh.initMesh();
+    msh -> initMesh();
 
     LinearElasticity3D fem(par, msh);
 

@@ -16,7 +16,7 @@ protected:
 
 public:
     explicit FEM3DVector(std::shared_ptr<ParamsVector> const&);
-    FEM3DVector(std::shared_ptr<ParamsVector> const&, Mesh&);
+    FEM3DVector(std::shared_ptr<ParamsVector> const&, std::shared_ptr<Mesh> const&);
 
     void setDirichletBoundaryConditions() noexcept override;
     void indexConstrainedNodes() noexcept override;

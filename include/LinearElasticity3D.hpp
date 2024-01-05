@@ -12,7 +12,7 @@ private:
     //std::function<Eigen::Vector3d(double, double, double)> h;
 public:
     explicit LinearElasticity3D(std::shared_ptr<ParamsLE> const&);
-    LinearElasticity3D(std::shared_ptr<ParamsLE> const&, Mesh&);
+    LinearElasticity3D(std::shared_ptr<ParamsLE> const&, std::shared_ptr<Mesh> const&);
 
     Eigen::Vector3d h(std::vector<double>&, int);
     void computeStiffnessMatrixAndLoadVector() override;

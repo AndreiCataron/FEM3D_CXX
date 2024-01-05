@@ -57,7 +57,7 @@ public:
         std::vector<double> trianglesDeterminants = {}, trianglesGlobalCoord = {};
     };
 
-public:
+protected:
     std::shared_ptr<Params> params;
 
     MeshElements elems;
@@ -75,6 +75,7 @@ public:
     // destructor
     ~Mesh();
 
+    friend class FEM3D;
     friend class FEM3DVector;
     friend class LinearElasticity3D;
 
