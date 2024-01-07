@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
             "z == 0", // neumann BC
             3, // quadrature precision
             3, // triangle quadrature precision
-            2, // order of lagrange polynomials
+            3, // order of lagrange polynomials
             exact, // exact
             grad, // solution gradient
             f, // f
