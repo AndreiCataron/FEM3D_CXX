@@ -53,22 +53,22 @@ int FEM3D::checkNodeSatisfiesBoundaryEquation(double nx, double ny, double nz) {
 }
 
 void FEM3D::setNeumannBoundaryConditions() noexcept {
-    for (const auto& b : mesh -> elems.boundary) {
+    for (const auto& b : mesh -> bdry.boundary) {
         std::vector<int> elementTypes;
         std::vector<std::vector<std::size_t> > elementTags, nodeTags;
         gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, b.first, b.second);
 
-        mesh -> elems.boundaryFacesTags.insert(mesh -> elems.boundaryFacesTags.cend(), elementTags[0].cbegin(), elementTags[0].cend());
-        mesh -> elems.boundaryFacesNodes.insert(mesh -> elems.boundaryFacesNodes.cend(), nodeTags[0].cbegin(), nodeTags[0].cend());
+        mesh -> bdry.boundaryFacesTags.insert(mesh -> bdry.boundaryFacesTags.cend(), elementTags[0].cbegin(), elementTags[0].cend());
+        mesh -> bdry.boundaryFacesNodes.insert(mesh -> bdry.boundaryFacesNodes.cend(), nodeTags[0].cbegin(), nodeTags[0].cend());
 
         for (std::size_t i = 0; i < elementTags[0].size(); i++) {
             std::size_t triangleTag = elementTags[0][i];
-            std::vector<std::size_t> faceNodeTags = std::vector<std::size_t>(nodeTags[0].cbegin() + int(i) * mesh -> elems.noNodesPerTriangle,
-                                                                             nodeTags[0].cbegin() + int(i + 1) * mesh -> elems.noNodesPerTriangle);
+            std::vector<std::size_t> faceNodeTags = std::vector<std::size_t>(nodeTags[0].cbegin() + int(i) * mesh -> bdry.noNodesPerTriangle,
+                                                                             nodeTags[0].cbegin() + int(i + 1) * mesh -> bdry.noNodesPerTriangle);
 
             bool ok = true;
             for (const auto& tag : faceNodeTags) {
-                CoordTuple coord = mesh -> elems.node_coordinates[tag];
+                CoordTuple coord = mesh -> global.node_coordinates[tag];
                 int bc = checkNodeSatisfiesBoundaryEquation(std::get<0>(coord), std::get<1>(coord), std::get<2>(coord));
 
                 if (bc != 2) {

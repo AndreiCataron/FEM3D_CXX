@@ -39,7 +39,7 @@ void Mesh::getNodesCoordinates() {
     gmsh::model::mesh::getNodes(nodeTags, coord, parametricCoord, -1, -1, true, false);
 
     for (int i = 0; i < nodeTags.size(); i++) {
-        elems.node_coordinates[nodeTags[i]] = {coord[3 * i], coord[3 * i + 1], coord[3 * i + 2]};
+        global.node_coordinates[nodeTags[i]] = {coord[3 * i], coord[3 * i + 1], coord[3 * i + 2]};
     }
 }
 
@@ -49,16 +49,16 @@ void Mesh::cubeMesh() {
 }
 
 void Mesh::computeInverseJacobians() {
-    elems.inverse_jacobians.reserve(int(elems.jacobians.size() / 9));
+    global.inverse_jacobians.reserve(int(global.jacobians.size() / 9));
 
-    for (int i = 0; i < int(elems.jacobians.size() / 9); i++) {
-        // jacobian is elems.jacobians[9 * i, 9 * i + 3, 9 * i + 6
+    for (int i = 0; i < int(global.jacobians.size() / 9); i++) {
+        // jacobian is global.jacobians[9 * i, 9 * i + 3, 9 * i + 6
         //                             9 * i + 1, 9 * i + 4, 9 * i + 7
         //                             9 * i + 2, 9 * i + 5, 9 * i + 8]
         Eigen::MatrixXd jacobian(3, 3);
-        jacobian << elems.jacobians[9 * i], elems.jacobians[9 * i + 3], elems.jacobians[9 * i + 6],
-                    elems.jacobians[9 * i + 1], elems.jacobians[9 * i + 4], elems.jacobians[9 * i + 7],
-                    elems.jacobians[9 * i + 2], elems.jacobians[9 * i + 5], elems.jacobians[9 * i + 8];
+        jacobian << global.jacobians[9 * i], global.jacobians[9 * i + 3], global.jacobians[9 * i + 6],
+                    global.jacobians[9 * i + 1], global.jacobians[9 * i + 4], global.jacobians[9 * i + 7],
+                    global.jacobians[9 * i + 2], global.jacobians[9 * i + 5], global.jacobians[9 * i + 8];
 
         Eigen::MatrixXd inverseJacobian(3, 3);
         inverseJacobian << - jacobian(1, 2) * jacobian(2, 1) + jacobian(1, 1) * jacobian(2, 2),
@@ -71,10 +71,10 @@ void Mesh::computeInverseJacobians() {
                            jacobian(0, 1) * jacobian(2, 0) - jacobian(0, 0) * jacobian(2, 1),
                            - jacobian(0, 1) * jacobian(1, 0) + jacobian(0, 0) * jacobian(1, 1);
 
-        inverseJacobian = 1 / elems.determinants[i] * inverseJacobian;
+        inverseJacobian = 1 / global.determinants[i] * inverseJacobian;
         inverseJacobian.transposeInPlace();
 
-        elems.inverse_jacobians.emplace_back(inverseJacobian);
+        global.inverse_jacobians.emplace_back(inverseJacobian);
     }
 }
 
@@ -116,22 +116,22 @@ void Mesh::initMesh() {
     std::vector<std::pair<int, int> > domain_entity;
     gmsh::model::getEntities(domain_entity, 3);
 
-    gmsh::model::getBoundary(domain_entity, elems.boundary, true, false, false);
+    gmsh::model::getBoundary(domain_entity, bdry.boundary, true, false, false);
 
     // get face element to identify triangle type
-    auto b = elems.boundary[0];
+    auto b = bdry.boundary[0];
 
     std::vector<int> elementTypes;
     std::vector<std::vector<std::size_t> > elementTags, nodeTags;
     gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, b.first, b.second);
 
-    elems.triangleElementType = elementTypes[0];
+    bdry.triangleElementType = elementTypes[0];
 
     // get integration points for triangles
     std::string triangleIntRule = "Gauss" + std::to_string(params -> triangle_quadrature_precision);
 
-    gmsh::model::mesh::getIntegrationPoints(elems.triangleElementType, triangleIntRule, elems.triangleLocalCoord, elems.triangleWeights);
-    elems.triangleNoIntegrationPoints = int(elems.triangleLocalCoord.size() / 3);
+    gmsh::model::mesh::getIntegrationPoints(bdry.triangleElementType, triangleIntRule, bdry.triangleLocalCoord, bdry.triangleWeights);
+    bdry.triangleNoIntegrationPoints = int(bdry.triangleLocalCoord.size() / 3);
 
     // get integration points for tetrahedrons
     std::string intRule = "Gauss" + std::to_string(params -> quadrature_precision);
@@ -146,10 +146,10 @@ void Mesh::initMesh() {
     gmsh::model::mesh::getBasisFunctions(elems.elementType, elems.localCoord, functionSpaceType, numComp, elems.basisFunctionsValues, numOrient);
 
     // get basis function values at triangle integration points
-    gmsh::model::mesh::getBasisFunctions(elems.triangleElementType, elems.triangleLocalCoord, functionSpaceType, numComp, elems.triangleBasisFunctionsValues, numOrient);
+    gmsh::model::mesh::getBasisFunctions(bdry.triangleElementType, bdry.triangleLocalCoord, functionSpaceType, numComp, bdry.triangleBasisFunctionsValues, numOrient);
 
     elems.noNodesPerElement = utils::binomialCoefficient(int(params -> element_order) + 3, 3);
-    elems.noNodesPerTriangle = utils::binomialCoefficient(int(params -> element_order) + 2, 2);
+    bdry.noNodesPerTriangle = utils::binomialCoefficient(int(params -> element_order) + 2, 2);
 
     // get gradients at integration points
     functionSpaceType = "GradLagrange" + std::to_string(params -> element_order);
@@ -158,10 +158,10 @@ void Mesh::initMesh() {
 
     // get jacobians of triangles
     std::vector<double> triangleJacobianCoords = {0.25, 0.25, 0}, triangleDeterminants, triangleJacobians, triangleGlobalCoords;
-    gmsh::model::mesh::preallocateJacobians(elems.triangleElementType, 1, false, true, false, triangleJacobians, elems.trianglesDeterminants, triangleGlobalCoords);
-    gmsh::model::mesh::getJacobians(elems.triangleElementType, triangleJacobianCoords, triangleJacobians, elems.trianglesDeterminants, triangleGlobalCoords);
-    gmsh::model::mesh::preallocateJacobians(elems.triangleElementType, int(elems.triangleLocalCoord.size()), false, true, true, triangleJacobians, triangleDeterminants, elems.trianglesGlobalCoord);
-    gmsh::model::mesh::getJacobians(elems.triangleElementType, elems.triangleLocalCoord, triangleJacobians, triangleDeterminants, elems.trianglesGlobalCoord);
+    gmsh::model::mesh::preallocateJacobians(bdry.triangleElementType, 1, false, true, false, triangleJacobians, global.trianglesDeterminants, triangleGlobalCoords);
+    gmsh::model::mesh::getJacobians(bdry.triangleElementType, triangleJacobianCoords, triangleJacobians, global.trianglesDeterminants, triangleGlobalCoords);
+    gmsh::model::mesh::preallocateJacobians(bdry.triangleElementType, int(bdry.triangleLocalCoord.size()), false, true, true, triangleJacobians, triangleDeterminants, global.trianglesGlobalCoord);
+    gmsh::model::mesh::getJacobians(bdry.triangleElementType, bdry.triangleLocalCoord, triangleJacobians, triangleDeterminants, global.trianglesGlobalCoord);
 
     // get the determinant of the jacobian of each element
     // todo-idea Modification
@@ -170,15 +170,15 @@ void Mesh::initMesh() {
     std::vector<double> jacobianCoords = {0.25, 0.25, 0.25};
 
     std::vector<double> dummyCoords;
-    gmsh::model::mesh::preallocateJacobians(elems.elementType, 1, true, true, false, elems.jacobians, elems.determinants, dummyCoords);
-    gmsh::model::mesh::getJacobians(elems.elementType, jacobianCoords, elems.jacobians, elems.determinants, dummyCoords);
+    gmsh::model::mesh::preallocateJacobians(elems.elementType, 1, true, true, false, global.jacobians, global.determinants, dummyCoords);
+    gmsh::model::mesh::getJacobians(elems.elementType, jacobianCoords, global.jacobians, global.determinants, dummyCoords);
 
     // get the global coordinates of the integration points in each element
 
     std::vector<double> dummyDeterminants;
     std::vector<double> dummyJacobians;
-    gmsh::model::mesh::preallocateJacobians(elems.elementType, int(elems.localCoord.size()), false, true, true, dummyJacobians, dummyDeterminants, elems.globalCoord);
-    gmsh::model::mesh::getJacobians(elems.elementType, elems.localCoord, dummyJacobians, dummyDeterminants, elems.globalCoord);
+    gmsh::model::mesh::preallocateJacobians(elems.elementType, int(elems.localCoord.size()), false, true, true, dummyJacobians, dummyDeterminants, global.globalCoord);
+    gmsh::model::mesh::getJacobians(elems.elementType, elems.localCoord, dummyJacobians, dummyDeterminants, global.globalCoord);
 
     computeInverseJacobians();
 }
