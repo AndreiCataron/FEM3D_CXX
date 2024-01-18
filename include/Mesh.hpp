@@ -33,9 +33,12 @@ public:
 
     void getNodesCoordinates();
     static void cubeMesh();
-    void computeInverseJacobians();
     void initMesh();
     static void showMesh(int, char**);
+
+private:
+    void computeInverseJacobians();
+    void computeNormalsAtFaceIntegrationPoints();
 };
 
 

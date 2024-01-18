@@ -6,25 +6,32 @@
 #include <gmsh.h>
 
 int main(int argc, char **argv) {
-    auto exact = [] (double x, double y, double z) {return std::vector<double>{x, y, z};};
+    auto exact = [] (double x, double y, double z) {
+        double nu = 0.33, E = 70.0, sig = 1.5;
+        return std::vector<double>{sig / E * x, -nu * sig / E * y, -nu * sig / E * z};};
     auto grad = [] (double x, double y, double z) {
+        double nu = 0.33, E = 70.0, sig = 1.5;
         Eigen::Matrix3d grd;
         grd << 1, 0, 0,
-                0, 1, 0,
-                0, 0, 1;
+                0, -nu, 0,
+                0, 0, -nu;
+        grd = sig / E * grd;
         return grd;
     };
     auto f = [] (double x, double y, double z) {return std::vector<double>{0, 0, 0};};
-    auto g = [] (double x, double y, double z) {return std::vector<double>{x, y, z};};
+    auto g = [] (double x, double y, double z) {
+        double nu = 0.33, E = 70.0, sig = 1.5;
+        return std::vector<double>{sig / E * x, -nu * sig / E * y, -nu * sig / E * z};
+    };
 
     auto par = std::make_shared<ParamsLE>(ParamsLE{
             0.1 , // h,
             10,
             1,
-            "z > 0", // dirichlet BC
-            "z == 0", // neumann BC
+            "x != -1 and x != 1", // dirichlet BC
+            "x == 1 or x == -1", // neumann BC
             3, // quadrature precision
-            2, // triangle quadrature precision
+            3, // triangle quadrature precision
             1, // order of lagrange polynomials
             exact, // exact
             grad, // solution gradient
@@ -42,7 +49,7 @@ int main(int argc, char **argv) {
 
     Eigen::initParallel();
 
-    std::cout << "Salut " << par -> mu << '\n';
+    std::cout << "Salut aici" << par -> mu << '\n';
 
     auto msh = std::make_shared<Mesh>(argc, argv, par);
 
@@ -86,9 +93,10 @@ int main(int argc, char **argv) {
 
     std::cout << "\nH1: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
 
-    std::vector<double> plane = {0, 0, 1, 0};
+    std::vector<double> plane = {1, 0, 0, 0};
     fem.outputData("/Users/andrei/CLionProjects/FEM/outputs/out.txt", true, plane);
 
+//    Mesh::showMesh(argc, argv);
 //    std::set<std::string> args(argv, argv + argc);
 //    if(!args.count("-nopopup")) gmsh::fltk::run();
 //

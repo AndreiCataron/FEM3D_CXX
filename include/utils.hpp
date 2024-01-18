@@ -29,13 +29,13 @@ namespace utils {
 
     std::vector<double> midpoint(std::vector<double>&, std::vector<double>&);
 
-    template <typename T> void deleteDuplicatesFromVector(std::vector<T> &vec) {
+    template <typename T> void deleteDuplicatesFromVector(std::vector<T>& vec) {
         std::sort(vec.begin(), vec.end());
         vec.erase(std::unique(vec.begin(), vec.end()), vec.end());
     }
 
     template<typename K, typename V>
-    std::unordered_map<V, K> inverseMap(std::unordered_map<K, V> &map)
+    std::unordered_map<V, K> inverseMap(std::unordered_map<K, V>& map)
     {
         std::unordered_map<V, K> inv;
         std::for_each(map.begin(), map.end(),
@@ -43,6 +43,12 @@ namespace utils {
                           inv.insert(std::make_pair(p.second, p.first));
                       });
         return inv;
+    }
+
+    template<typename T>
+    std::vector<T> tupleToVector(std::tuple<T, T, T>& tup)
+    {
+        return {std::get<0>(tup), std::get<1>(tup), std::get<2>(tup)};
     }
 }
 

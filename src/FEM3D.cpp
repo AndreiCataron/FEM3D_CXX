@@ -108,6 +108,10 @@ void FEM3D::indexFreeNodes() noexcept {
     }
 }
 
+void FEM3D::resetBoundaryConditions() {
+    ;
+}
+
 // getters
 
 std::unordered_map<std::size_t, int> FEM3D::getNodeIndexes() {

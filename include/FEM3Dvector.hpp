@@ -5,6 +5,8 @@
 #include <string>
 #include "params.hpp"
 
+using DirichletMap = std::unordered_map<std::size_t, std::vector<double> >;
+
 class FEM3DVector : public FEM3D {
 private:
     //const ParamsVector params3d_;
@@ -12,22 +14,25 @@ private:
 
 protected:
     // store for each node on the boundary [tag : dirichlet bc]
-    std::unordered_map<std::size_t, std::vector<double> > dirichlet_bc;
+    DirichletMap dirichlet_bc;
 
 public:
     explicit FEM3DVector(std::shared_ptr<ParamsVector> const&);
     FEM3DVector(std::shared_ptr<ParamsVector> const&, std::shared_ptr<Mesh> const&);
-
-    void setDirichletBoundaryConditions() noexcept override;
-    void indexConstrainedNodes() noexcept override;
 
     void outputData(std::string, bool, std::vector<double>) override;
 
     void computeL2Error() override;
     void computeH1Error() override;
 
+private:
+    void setDirichletBoundaryConditions() noexcept override;
+    void setDirichletBoundaryConditions(const DirichletMap&) noexcept;
+    void indexConstrainedNodes() noexcept override;
+
+public:
     //getters
-    std::unordered_map<std::size_t, std::vector<double> > getDirichletBC();
+    DirichletMap getDirichletBC();
 };
 
 #endif

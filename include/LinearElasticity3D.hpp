@@ -12,20 +12,26 @@ private:
     // matrices used for stiffness computation;
     Eigen::MatrixXd D, Mk;
     std::vector<Eigen::Triplet<double> > tripletList;
+    // stresses at face integration points
+    std::vector<Eigen::Matrix3d> integrationPointsStresses = {};
     // for parallelism
-    std::mutex mtx_triplet, mtx_load, mtx_neu, mtx_h;
+    std::mutex mtx_stiff, mtx_neu;
 
 public:
     explicit LinearElasticity3D(std::shared_ptr<ParamsLE> const&);
     LinearElasticity3D(std::shared_ptr<ParamsLE> const&, std::shared_ptr<Mesh> const&);
 
-    Eigen::Vector3d h(std::vector<double>&, int);
+    void computeIntegrationPointsStresses() noexcept;
+
     void computeStiffnessMatrixAndLoadVector() override;
+
+    void solveDirectProblem() override;
+
+private:
+    Eigen::Vector3d h(int);
 
     void stiffnessIterations(int, int);
     void neumannIterations(int, int);
-
-    void solveDirectProblem() override;
 };
 
 #endif

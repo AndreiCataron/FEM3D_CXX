@@ -25,7 +25,7 @@ add_executable(stiff test_stiffnessAndLoad.cpp ../include/FEM3D.hpp ../src/FEM3D
 add_executable(exam testExampleSolutions.cpp ../include/FEM3D.hpp ../src/FEM3D.cpp ../include/FEM3Dvector.hpp ../src/FEM3Dvector.cpp ../include/LinearElasticity3D.hpp ../src/LinearElasticity3D.cpp ../include/utils.hpp ../src/utils.cpp ../include/Mesh.hpp ../src/Mesh.cpp ../include/params.hpp)
 add_executable(util test_utils.cpp ../include/utils.hpp ../src/utils.cpp)
 add_executable(examnonlin ../include/FEM3D.hpp ../src/FEM3D.cpp ../include/FEM3Dvector.hpp ../src/FEM3Dvector.cpp ../include/LinearElasticity3D.hpp ../src/LinearElasticity3D.cpp ../include/utils.hpp ../src/utils.cpp ../include/Mesh.hpp ../src/Mesh.cpp ../include/params.hpp testNonlinearSolution.cpp)
-
+add_executable(alter ../include/Algoritm.hpp ../src/Algoritm.cpp testAlternant.cpp)
 
 target_link_libraries(sbc LINK_PUBLIC "${FOO_LIB}")
 
@@ -78,3 +78,4 @@ add_test(NAME testStiffnessAndLoad COMMAND stiff)
 add_test(NAME testExamples COMMAND exam)
 add_test(NAME testUtils COMMAND util)
 add_test(NAME testNonlinear COMMAND examnonlin)
+add_test(NAME testAlternant COMMAND alter)

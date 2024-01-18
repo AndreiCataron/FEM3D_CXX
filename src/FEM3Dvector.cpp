@@ -32,6 +32,10 @@ void FEM3DVector::setDirichletBoundaryConditions() noexcept {
     }
 }
 
+void FEM3DVector::setDirichletBoundaryConditions(const DirichletMap& conditionMap) noexcept {
+    dirichlet_bc = conditionMap;
+}
+
 void FEM3DVector::indexConstrainedNodes() noexcept {
     for (const auto& n : dirichlet_bc) {
         // check node is not already in node indexes
@@ -222,6 +226,6 @@ void FEM3DVector::computeH1Error() {
 
 }
 
-std::unordered_map<std::size_t, std::vector<double> > FEM3DVector::getDirichletBC() {
+DirichletMap FEM3DVector::getDirichletBC() {
     return dirichlet_bc;
 }

@@ -633,20 +633,121 @@
 //    // print output of the program
 //    cout << "Machine Epsilon is : " << prev_epsilon << endl;
 //}
+//#include <iostream>
+//
+//constexpr int factorial_cxx14(int n)
+//{
+//    int res = 1;
+//    while (n > 1)
+//        res *= n--;
+//    return res;
+//}
+//
+//int main()
+//{
+//    int n;
+//    std::cin >> n;
+//    std::cout << factorial_cxx14(n);
+//    return 0;
+//}
+
 #include <iostream>
 
-constexpr int factorial_cxx14(int n)
-{
-    int res = 1;
-    while (n > 1)
-        res *= n--;
-    return res;
-}
+using namespace std;
 
-int main()
-{
-    int n;
-    std::cin >> n;
-    std::cout << factorial_cxx14(n);
-    return 0;
+class Poligon{
+private:
+    int nr_laturi;
+protected:
+    double arie;
+public:
+    Poligon() {
+        cout << "Constructor Poligon" << endl;
+    }
+
+    virtual void calculeaza_arie() = 0;
+    double get_arie() {
+        return this -> arie;
+    };
+
+    ~Poligon() {
+        cout << "Destructor Poligon" << endl;
+    }
+};
+
+class Triunghi : public Poligon {
+private:
+    double a, b, c;
+public:
+    Triunghi(double a, double b, double c) {
+        this -> a = a;
+        this -> b = b;
+        this -> c = c;
+        cout << "Constructor Triunghi" << endl;
+    }
+
+    void calculeaza_arie() override{
+        cout << 2;
+    }
+};
+
+class Patrulater : public Poligon{
+public:
+    Patrulater() {
+        cout << "Connstructor Patrulater" << endl;
+    }
+
+    ~Patrulater() {
+        cout << "Destructor Patrulater" << endl;
+    }
+};
+
+class Patrat : public Patrulater{
+private:
+    double l;
+public:
+    Patrat(double latura) : Patrulater(){
+        cout << "Constructor Patrat" << endl;
+        this -> l = latura;
+    }
+
+    void calculeaza_arie() override {
+        this -> arie =  l * l;
+    }
+
+    ~Patrat() {
+        cout << "Destructor Patrat" << endl;
+    }
+};
+
+//class Desen{
+//private:
+//    int nr_poligoane;
+//    Poligon* poligoane;
+//public:
+//    Desen(int nrpoligoane, Poligon* vector_poligoane){
+//        this -> nr_poligoane = nrpoligoane;
+//        this -> poligoane = new Poligon[this -> nr_poligoane];
+//        for (int i = 0; i < this -> nr_poligoane; i++) {
+//            this -> poligoane[i] = vector_poligoane[i];
+//        }
+//        delete[] vector_poligoane;
+//    }
+//};
+
+int main() {
+    Patrat p(2);
+    Triunghi t(1, 2, 3);
+    Poligon* poli1 = &p;
+    Poligon* poli2 = &t;
+
+    Poligon* v[3];
+
+    vector<Poligon*> vec;
+    vec.push_back(poli1);
+    vec.push_back(poli2);
+
+   //vector<int> v = {1, 2, 3};
+    cout << v[2] << endl;
+
 }

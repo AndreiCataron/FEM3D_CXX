@@ -19,10 +19,6 @@ typedef exprtk::parser<double>       parser_t;
 //   check below
 //   https://gitlab.onelab.info/gmsh/fem/-/blob/master/src/post/Integrate.cpp
 
-// todo-idea Move boundary node information to Mesh class
-//   am 3 locuri in care fac acelasi for (auto b : boundary)
-//   super rau !!!
-
 class FEM3D{
 private:
     // struct of parameters
@@ -61,18 +57,9 @@ public:
     FEM3D(std::shared_ptr<Params> const&, std::shared_ptr<Mesh> const&);
 
     // methods
-    double parseExpression(const std::string&, double, double, double);
-
-    // check if a node is on a part of the boundary where boundary conditions are imposed
-    // return 0 if no bc are imposed, 1 for dirichlet, 2 for neumann
-    int checkNodeSatisfiesBoundaryEquation(double, double, double);
-
-    void setNeumannBoundaryConditions() noexcept;
-    virtual void setDirichletBoundaryConditions() noexcept = 0;
-
     void setBoundaryConditions() noexcept;
-    virtual void indexConstrainedNodes() noexcept = 0;
-    void indexFreeNodes() noexcept;
+
+    void resetBoundaryConditions();
 
     virtual void computeStiffnessMatrixAndLoadVector() = 0;
     virtual void solveDirectProblem() = 0;
@@ -82,6 +69,20 @@ public:
     virtual void computeL2Error() = 0;
     virtual void computeH1Error() = 0;
 
+protected:
+    double parseExpression(const std::string&, double, double, double);
+
+    // check if a node is on a part of the boundary where boundary conditions are imposed
+    // return 0 if no bc are imposed, 1 for dirichlet, 2 for neumann
+    int checkNodeSatisfiesBoundaryEquation(double, double, double);
+
+    void setNeumannBoundaryConditions() noexcept;
+    virtual void setDirichletBoundaryConditions() noexcept = 0;
+
+    virtual void indexConstrainedNodes() noexcept = 0;
+    void indexFreeNodes() noexcept;
+
+public:
     //getters
     std::unordered_map<std::size_t, int> getNodeIndexes();
     std::vector<int> getConstrainedNodes();

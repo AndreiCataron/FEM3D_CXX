@@ -44,7 +44,7 @@ void Mesh::getNodesCoordinates() {
 }
 
 void Mesh::cubeMesh() {
-    gmsh::model::occ::addBox(0, 0, 0, 1, 1, 1, 1000);
+    gmsh::model::occ::addBox(-1, -1, -1, 2, 2, 2, 1000);
     gmsh::model::occ::synchronize();
 }
 
@@ -75,6 +75,30 @@ void Mesh::computeInverseJacobians() {
         inverseJacobian.transposeInPlace();
 
         global.inverse_jacobians.emplace_back(inverseJacobian);
+    }
+}
+
+void Mesh::computeNormalsAtFaceIntegrationPoints() {
+    auto it = global.trianglesGlobalCoord.cbegin();
+    for (const auto& b : bdry.boundary) {
+        std::vector<int> elementTypes;
+        std::vector<std::vector<std::size_t> > elementTags, nodeTags;
+        gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, b.first, b.second);
+
+        auto coords = std::vector<double>(it, it + 3 * bdry.triangleNoIntegrationPoints * int(elementTags[0].size()));
+        it += bdry.triangleNoIntegrationPoints * int(elementTags[0].size());
+
+        std::vector<double> parametricCoords, normals;
+
+        gmsh::model::getParametrization(2, b.second, coords, parametricCoords);
+
+        gmsh::model::getNormal(b.second, parametricCoords, normals);
+
+        for (int i = 0; i < normals.size() / 3; i++) {
+            double *ptr = &normals[3 * i];
+            Eigen::Map<Eigen::Vector3d> normalConverted(ptr, 3);
+            global.normals.emplace_back(normalConverted);
+        }
     }
 }
 
@@ -181,6 +205,7 @@ void Mesh::initMesh() {
     gmsh::model::mesh::getJacobians(elems.elementType, elems.localCoord, dummyJacobians, dummyDeterminants, global.globalCoord);
 
     computeInverseJacobians();
+    computeNormalsAtFaceIntegrationPoints();
 }
 
 void Mesh::showMesh(int argc, char **argv) {

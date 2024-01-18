@@ -18,6 +18,9 @@ struct GlobalData {
 
     // boundary triangles jacobians
     std::vector<double> trianglesDeterminants = {}, trianglesGlobalCoord = {};
+
+    // normals at boundary integration points
+    std::vector<Eigen::Vector3d> normals = {};
 };
 
 struct BoundaryData {

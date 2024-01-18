@@ -1,46 +1,44 @@
 #include "../include/LinearElasticity3D.hpp"
-#include "../include/utils.hpp"
 #include <iostream>
 #include <set>
 #include <gmsh.h>
 #include <eigen3/Eigen/IterativeLinearSolvers>
 #include <thread>
+#include <future>
 
-LinearElasticity3D::LinearElasticity3D(std::shared_ptr<ParamsLE> const& params) : FEM3DVector(params), paramsLE_(params) {}
+LinearElasticity3D::LinearElasticity3D(std::shared_ptr<ParamsLE> const& params) : FEM3DVector(params), paramsLE_(params) {
+    computeIntegrationPointsStresses();
+}
 
-LinearElasticity3D::LinearElasticity3D(std::shared_ptr<ParamsLE> const& params, std::shared_ptr<Mesh> const& msh) : FEM3DVector(params, msh), paramsLE_(params) {}
+LinearElasticity3D::LinearElasticity3D(std::shared_ptr<ParamsLE> const& params, std::shared_ptr<Mesh> const& msh) : FEM3DVector(params, msh), paramsLE_(params) {
+    computeIntegrationPointsStresses();
+}
 
-Eigen::Vector3d LinearElasticity3D::h(std::vector<double>& coord, const int tag) {
-    // compute strain tensor
-    double x = coord[0], y = coord[1], z = coord[2];
-    Eigen::Matrix3d strain = 0.5 * (paramsLE_ -> solution_gradient(x, y, z) + (paramsLE_ -> solution_gradient(x, y, z)).transpose());
+void LinearElasticity3D::computeIntegrationPointsStresses() noexcept {
+    for (int i = 0; i < mesh -> global.trianglesGlobalCoord.size() / 3; i++) {
+        Eigen::Matrix3d strain = 0.5 * (paramsLE_ -> solution_gradient(mesh -> global.trianglesGlobalCoord[3 * i],
+                                                                       mesh -> global.trianglesGlobalCoord[3 * i + 1],
+                                                                       mesh -> global.trianglesGlobalCoord[3 * i + 2]) +
+                                 (paramsLE_ -> solution_gradient(mesh -> global.trianglesGlobalCoord[3 * i],
+                                                                 mesh -> global.trianglesGlobalCoord[3 * i + 1],
+                                                                 mesh -> global.trianglesGlobalCoord[3 * i + 2])).transpose());
 
-    // compute stress tensor
-    Eigen::Matrix3d stress = (paramsLE_ -> E) / (1 + paramsLE_ -> nu) * (strain + (paramsLE_ -> nu) / (1 - 2 * paramsLE_ -> nu) * strain.trace() * Eigen::Matrix3d::Identity());
+        // compute stress tensor
+        Eigen::Matrix3d stress = (paramsLE_ -> E) / (1 + paramsLE_ -> nu) * (strain + (paramsLE_ -> nu) / (1 - 2 * paramsLE_ -> nu) * strain.trace() * Eigen::Matrix3d::Identity());
 
-    // get normal
-    std::vector<double> parametricCoord, normal;
+        integrationPointsStresses.emplace_back(stress);
+    }
+}
 
-    mtx_h.lock();
-    gmsh::model::getParametrization(2, tag, coord, parametricCoord);
-
-    gmsh::model::getNormal(tag, parametricCoord, normal);
-    mtx_h.unlock();
-
-    // convert normal to Eigen::Vector3d
-    double *ptr = &normal[0];
-    Eigen::Map<Eigen::Vector3d> normalConverted(ptr, 3);
-
-    Eigen::Vector3d rez = stress * normalConverted;
-
-    return rez;
+Eigen::Vector3d LinearElasticity3D::h(const int nodeId) {
+    return integrationPointsStresses[nodeId] * mesh -> global.normals[nodeId];
 }
 
 void LinearElasticity3D::stiffnessIterations(int start, int end) {
     for (int i = start; i < end; i++) {
         std::vector<std::size_t> elementNodeTags = std::vector<std::size_t>(
-                mesh -> elems.nodeTags.begin() + i * mesh -> elems.noNodesPerElement,
-                mesh -> elems.nodeTags.begin() + (i + 1) * mesh -> elems.noNodesPerElement);
+                mesh -> elems.nodeTags.cbegin() + i * mesh -> elems.noNodesPerElement,
+                mesh -> elems.nodeTags.cbegin() + (i + 1) * mesh -> elems.noNodesPerElement);
 
         // compute element stiffness matrix
         Eigen::MatrixXd K = Eigen::MatrixXd::Zero(3 * mesh -> elems.noNodesPerElement, 3 * mesh -> elems.noNodesPerElement);
@@ -72,9 +70,6 @@ void LinearElasticity3D::stiffnessIterations(int start, int end) {
 
         double det = mesh -> global.determinants[i];
 
-        // Eigen::MatrixXd elementStiffness = det * K;
-        // Eigen::MatrixXd elementMass = det * Mk;
-
         // find stiffness and load indexes for the displacements in the element
         std::vector<int> elementNodeIndexes;
         elementNodeIndexes.reserve(3 * mesh -> elems.noNodesPerElement);
@@ -86,16 +81,6 @@ void LinearElasticity3D::stiffnessIterations(int start, int end) {
             elementNodeIndexes.emplace_back(3 * index + 1);
             elementNodeIndexes.emplace_back(3 * index + 2);
         }
-
-        // add triplets to tripletList
-        // repeated pairs of indexes are summed up when initializing the sparse stiffness matrix
-        mtx_triplet.lock();
-        for (int k = 0; k < 3 * mesh -> elems.noNodesPerElement; k++) {
-            for (int j = 0; j < 3 * mesh -> elems.noNodesPerElement; j++) {
-                tripletList.emplace_back(elementNodeIndexes[k], elementNodeIndexes[j], det * K(k, j));
-            }
-        }
-        mtx_triplet.unlock();
 
         // the vector f^k from Larson
         std::vector<double> fk;
@@ -113,38 +98,35 @@ void LinearElasticity3D::stiffnessIterations(int start, int end) {
         double *ptr = &fk[0];
         Eigen::Map<Eigen::VectorXd> fkConverted(ptr, int(fk.size()));
 
-        // Eigen::VectorXd localLoad = elementMass * fkConverted;
-
-
-        mtx_load.lock();
+        mtx_stiff.lock();
+        // add triplets to tripletList
+        // repeated pairs of indexes are summed up when initializing the sparse stiffness matrix
+        for (int k = 0; k < 3 * mesh -> elems.noNodesPerElement; k++) {
+            for (int j = 0; j < 3 * mesh -> elems.noNodesPerElement; j++) {
+                tripletList.emplace_back(elementNodeIndexes[k], elementNodeIndexes[j], det * K(k, j));
+            }
+        }
         load_vector(elementNodeIndexes) = load_vector(elementNodeIndexes) + det * Mk * fkConverted;
-        mtx_load.unlock();
+        mtx_stiff.unlock();
     }
 }
 
 void LinearElasticity3D::neumannIterations(int start, int end) {
     for (int i = start; i < end; i++) {
         std::size_t faceTag = mesh -> bdry.boundaryFacesTags[i];
-        if (neumannBoundaryTriangles.find(faceTag) != neumannBoundaryTriangles.end()) {
+        if (neumannBoundaryTriangles.find(faceTag) != neumannBoundaryTriangles.cend()) {
             std::vector<std::size_t> faceNodeTags = std::vector<std::size_t>(
-                    mesh -> bdry.boundaryFacesNodes.begin() + i * mesh -> bdry.noNodesPerTriangle,
-                    mesh -> bdry.boundaryFacesNodes.begin() + (i + 1) * mesh -> bdry.noNodesPerTriangle);
+                    mesh -> bdry.boundaryFacesNodes.cbegin() + i * mesh -> bdry.noNodesPerTriangle,
+                    mesh -> bdry.boundaryFacesNodes.cbegin() + (i + 1) * mesh -> bdry.noNodesPerTriangle);
 
             // compute integral of h * phi for all basis functions
             for (int k = 0; k < mesh -> bdry.noNodesPerTriangle; k++) {
                 Eigen::Vector3d integral = Eigen::Vector3d::Zero();
 
                 for (int j = 0; j < mesh -> bdry.triangleNoIntegrationPoints; j++) {
-                    //std::cout << mesh -> bdry.trianglesGlobalCoord.size() << '\n';
-                    std::vector<double> coord = std::vector<double>(
-                            mesh -> global.trianglesGlobalCoord.begin() +
-                            i * 3 * mesh -> bdry.triangleNoIntegrationPoints + 3 * j,
-                            mesh -> global.trianglesGlobalCoord.begin() +
-                            i * 3 * mesh -> bdry.triangleNoIntegrationPoints + 3 * j + 3);
-
-                    integral += mesh -> bdry.triangleWeights[j] *
-                                mesh -> bdry.triangleBasisFunctionsValues[j * mesh -> bdry.noNodesPerTriangle + k] *
-                                h(coord, int(neumannBoundaryTriangles[faceTag]));
+                      integral += mesh -> bdry.triangleWeights[j] *
+                                  mesh -> bdry.triangleBasisFunctionsValues[j * mesh -> bdry.noNodesPerTriangle + k] *
+                                  h(i * mesh -> bdry.triangleNoIntegrationPoints + j);
                 }
 
                 integral *= mesh -> global.trianglesDeterminants[i];
@@ -203,10 +185,8 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
     tripletList.reserve(mesh -> elems.elementTags.size() * 3 * mesh -> elems.noNodesPerElement * 3 * mesh -> elems.noNodesPerElement);
     stiffness_matrix.resize(3 * noNodes, 3 * noNodes);
 
-    auto start = std::chrono::steady_clock::now();
-
     // assemble tripletList and load vector by looping through all elements and computing the element stiffness matrix and load vector
-    const int num_threads = 1;
+    const int num_threads = 4;
 
     //std::vector<std::jthread> threads;
     std::vector<std::thread> threads;
@@ -223,19 +203,15 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
                              {stiffnessIterations(startIdx, endIdx);} );
     }
 
+    //neumannIterations(0, int(mesh -> bdry.boundaryFacesTags.size()));
+    // auto a = std::async(std::launch::async, [this](){neumannIterations(0, int(mesh -> bdry.boundaryFacesTags.size())); } );
+
     for (auto &thread : threads) {
         thread.join();
     }
 
-    auto end = std::chrono::steady_clock::now();
-
-    auto diff = end - start;
-
-    std::cout << "STIFF 1: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
-
-    // neumann contribution
+    std::vector<std::thread> neuThreads;
     chunk_size = int(mesh -> bdry.boundaryFacesTags.size()) / num_threads;
-    std::vector<std::thread> neumannThreads;
 
     for (int t = 0; t < num_threads; t++) {
         int startIdx = t * chunk_size;
@@ -244,11 +220,11 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
             endIdx = int(mesh -> bdry.boundaryFacesTags.size());
         }
 
-        neumannThreads.emplace_back([startIdx, endIdx, this]()
-                                    {neumannIterations(startIdx, endIdx);} );
+        neuThreads.emplace_back([startIdx, endIdx, this]()
+                             { neumannIterations(startIdx, endIdx);} );
     }
 
-    for (auto &thread : neumannThreads) {
+    for (auto &thread : neuThreads) {
         thread.join();
     }
 

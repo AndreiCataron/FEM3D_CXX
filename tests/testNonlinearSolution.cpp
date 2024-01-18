@@ -6,35 +6,36 @@
 
 int main(int argc, char **argv) {
     auto exact = [] (double x, double y, double z) {
-        double nu = 0.33, E = 70.0;
-        return std::vector<double>{(1 + nu) / E * (- nu * x * y + z + 1),
-                                   (1 + nu) / E * (0.5 * (nu * x * x + y * y + nu * z * z)),
-                                   (1 + nu) / E * (- x - nu * y * z)};};
+        double nu = 0.33, E = 70.0, sig = 1.5;
+        return std::vector<double>{sig / (2 * E) * (x * x + nu * y * y + nu * z * z),
+                                   - nu * sig / E * x * y,
+                                   - nu * sig / E * x * z};
+    };
 
     auto grad = [] (double x, double y, double z) {
-        double nu = 0.33, E = 70.0;
+        double nu = 0.33, E = 70.0, sig = 1.5;
         Eigen::Matrix3d grd;
-        grd << - nu * y, - nu * x, 1,
-                nu * x, y, nu * z,
-                -1, - nu * z, - nu * y;
-        grd = (1 + nu) / E * grd;
+        grd << x, nu * y, nu * z,
+               -nu * y, -nu * x, 0,
+               -nu * z, 0, -nu * x;
+        grd = sig / E * grd;
         return grd;
     };
 
-    auto f = [] (double x, double y, double z) {return std::vector<double>{0, -1.33, 0};};
+    auto f = [] (double x, double y, double z) {return std::vector<double>{-1.5, 0, 0};};
     auto g = [] (double x, double y, double z) {
-        double nu = 0.33, E = 70.0;
-        return std::vector<double>{(1 + nu) / E * (- nu * x * y + z + 1),
-                                   (1 + nu) / E * (0.5 * (nu * x * x + y * y + nu * z * z)),
-                                   (1 + nu) / E * (- x - nu * y * z)};
+        double nu = 0.33, E = 70.0, sig = 1.5;
+        return std::vector<double>{sig / (2 * E) * (x * x + nu * y * y + nu * z * z),
+                                   - nu * sig / E * x * y,
+                                   - nu * sig / E * x * z};
     };
 
     auto par = std::make_shared<ParamsLE>(ParamsLE{
-            0.1 , // h,
+            0.05 , // h,
             10,
             1,
-            "z > 0", // dirichlet BC
-            "z == 0", // neumann BC
+            "x != 1", // dirichlet BC
+            "x == 1", // neumann BC
             3, // quadrature precision
             3, // triangle quadrature precision
             1, // order of lagrange polynomials
@@ -48,30 +49,11 @@ int main(int argc, char **argv) {
             70.0 // E
     });
 
-//    auto par = std::make_shared<ParamsLE>(ParamsLE{
-//            0.1 , // h,
-//            10,
-//            1,
-//            "y < 1", // dirichlet BC
-//            "y == 1", // neumann BC
-//            3, // quadrature precision
-//            2, // triangle quadrature precision
-//            1, // order of lagrange polynomials
-//            exact, // exact
-//            grad, // solution gradient
-//            f, // f
-//            g, // g
-//            -1, // lambda
-//            -1, // mu
-//            0.33, // nu
-//            70.0 // E
-//    });
-
     utils::checkParamsLE(*par);
 
     Eigen::initParallel();
 
-    std::cout << "Salut neliniar " << par -> exact_solution(1, 1, 1)[0] << '\n';
+    std::cout << "Salut neliniar " << '\n';
 
 
     auto msh = std::make_shared<Mesh>(argc, argv, par);
@@ -117,7 +99,7 @@ int main(int argc, char **argv) {
     std::cout << "\nH1: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
 
     //std::vector<double> plane = {0, 1, 0, 0};
-    std::vector<double> plane = {0, 0, 1, 0};
+    std::vector<double> plane = {1, 0, 0, 0};
     fem.outputData("/Users/andrei/CLionProjects/FEM/outputs/out.txt", true, plane);
 
 }

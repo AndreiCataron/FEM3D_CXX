@@ -49,8 +49,8 @@ int main(int argc, char **argv) {
 
     LinearElasticity3D fem(par, msh);
 
-    auto rez = fem.checkNodeSatisfiesBoundaryEquation(0.2, 1, 0);
-    std::cout << rez;
+    //auto rez = fem.checkNodeSatisfiesBoundaryEquation(0.2, 1, 0);
+    //std::cout << rez;
 
     return 0;
 }
