@@ -21,6 +21,8 @@ public:
     explicit LinearElasticity3D(std::shared_ptr<ParamsLE> const&);
     LinearElasticity3D(std::shared_ptr<ParamsLE> const&, std::shared_ptr<Mesh> const&);
 
+    void resetBoundaryConditions() noexcept override;
+
     void computeIntegrationPointsStresses() noexcept;
 
     void computeStiffnessMatrixAndLoadVector() override;

@@ -59,12 +59,12 @@ public:
     // methods
     void setBoundaryConditions() noexcept;
 
-    void resetBoundaryConditions();
+    virtual void resetBoundaryConditions() noexcept = 0;
 
     virtual void computeStiffnessMatrixAndLoadVector() = 0;
     virtual void solveDirectProblem() = 0;
 
-    virtual void outputData(std::string, bool boundaryError = false, std::vector<double> plane = {}) = 0;
+    virtual void outputData(const std::string& file, bool boundaryError, const std::vector<double>& plane) = 0;
 
     virtual void computeL2Error() = 0;
     virtual void computeH1Error() = 0;
@@ -83,7 +83,8 @@ protected:
     void indexFreeNodes() noexcept;
 
 public:
-    //getters
+    // getters
+    const Mesh& getMesh() const;
     std::unordered_map<std::size_t, int> getNodeIndexes();
     std::vector<int> getConstrainedNodes();
     std::vector<int> getFreeNodes();

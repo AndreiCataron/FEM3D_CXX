@@ -108,11 +108,11 @@ void FEM3D::indexFreeNodes() noexcept {
     }
 }
 
-void FEM3D::resetBoundaryConditions() {
-    ;
-}
-
 // getters
+
+const Mesh& FEM3D::getMesh() const {
+    return *mesh;
+}
 
 std::unordered_map<std::size_t, int> FEM3D::getNodeIndexes() {
     return nodeIndexes;

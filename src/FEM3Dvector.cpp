@@ -47,7 +47,7 @@ void FEM3DVector::indexConstrainedNodes() noexcept {
 }
 
 // if boundaryError is True, output a projection on the plane given by equation of the solution on the neumann boundary
-void FEM3DVector::outputData(std::string file, bool boundaryError, std::vector<double> plane) {
+void FEM3DVector::outputData(const std::string& file, bool boundaryError, const std::vector<double>& plane) {
     std::ofstream myFile;
     myFile.open(file, std::ios::out | std::ios::trunc);
 

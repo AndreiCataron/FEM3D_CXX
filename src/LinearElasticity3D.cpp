@@ -14,6 +14,14 @@ LinearElasticity3D::LinearElasticity3D(std::shared_ptr<ParamsLE> const& params, 
     computeIntegrationPointsStresses();
 }
 
+void LinearElasticity3D::resetBoundaryConditions() noexcept {
+    dirichlet_bc.clear();
+    integrationPointsStresses.clear();
+    freeNodes.clear();
+    constrainedNodes.clear();
+    neumannBoundaryTriangles.clear();
+}
+
 void LinearElasticity3D::computeIntegrationPointsStresses() noexcept {
     for (int i = 0; i < mesh -> global.trianglesGlobalCoord.size() / 3; i++) {
         Eigen::Matrix3d strain = 0.5 * (paramsLE_ -> solution_gradient(mesh -> global.trianglesGlobalCoord[3 * i],

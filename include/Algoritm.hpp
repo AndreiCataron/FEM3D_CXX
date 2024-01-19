@@ -6,6 +6,10 @@
 class Algoritm {
 private:
     std::shared_ptr<LinearElasticity3D> LE;
+public:
+    explicit Algoritm(std::shared_ptr<LinearElasticity3D> const&);
+
+    void iteration();
 };
 
 
