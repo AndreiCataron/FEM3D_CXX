@@ -21,6 +21,7 @@ public:
     FEM3DVector(std::shared_ptr<ParamsVector> const&, std::shared_ptr<Mesh> const&);
 
     void outputData(const std::string& file, bool boundaryError, const std::vector<double>& plane) override;
+    void computeApproximateBoundaryStresses();
 
     void computeL2Error() override;
     void computeH1Error() override;

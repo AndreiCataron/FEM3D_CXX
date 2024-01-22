@@ -125,6 +125,39 @@ void FEM3DVector::outputData(const std::string& file, bool boundaryError, const 
     myFile.close();
 }
 
+void FEM3DVector::computeApproximateBoundaryStresses() {
+    for (int i = 0; i < mesh -> global.trianglesGlobalCoord.size() / 3; i++) {
+        auto tag = mesh -> elems.bdryAdjacentElems[i];
+        if (auto it = std::find(mesh -> elems.elementTags.cbegin(), mesh -> elems.elementTags.cend(), tag);
+                 it != mesh -> elems.elementTags.cend()) {
+
+            auto idx = it - mesh -> elems.elementTags.cbegin();
+
+            auto elementNodeTags = std::vector<std::size_t>(mesh -> elems.nodeTags.cbegin() + idx * mesh -> elems.noNodesPerElement,
+                                                            mesh -> elems.nodeTags.cbegin() + (idx + 1) * mesh -> elems.noNodesPerElement);
+
+            // the approximate solution gradient at the integration point
+            Eigen::Matrix3d approxGradient = Eigen::Matrix3d::Zero();
+
+            Eigen::Vector3d referenceGrads, elementGrads;
+            for (int k = 0; k < mesh -> elems.noNodesPerElement; k++) {
+                referenceGrads << mesh -> bdry.gradientsAtTriangleIntPoints[i * 3 * mesh -> elems.noNodesPerElement + 3 * k],
+                                  mesh -> bdry.gradientsAtTriangleIntPoints[i * 3 * mesh -> elems.noNodesPerElement + 3 * k + 1],
+                                  mesh -> bdry.gradientsAtTriangleIntPoints[i * 3 * mesh -> elems.noNodesPerElement + 3 * k + 2];
+
+                elementGrads = mesh -> global.inverse_jacobians[idx] * referenceGrads;
+
+                auto nodeTag = elementNodeTags[k];
+                int index = nodeIndexes[nodeTag];
+
+                approxGradient.row(0) += displacements(3 * index) * elementGrads.transpose();
+                approxGradient.row(1) += displacements(3 * index + 1) * elementGrads.transpose();
+                approxGradient.row(2) += displacements(3 * index + 2) * elementGrads.transpose();
+            }
+        }
+    }
+}
+
 void FEM3DVector::computeL2Error() {
     double result = 0;
 
@@ -179,9 +212,9 @@ void FEM3DVector::computeH1Error() {
 
     for (int i = 0; i < mesh -> elems.elementTags.size(); i++) {
         // get tags of nodes in current element
-        std::vector<std::size_t> elementNodeTags = std::vector<std::size_t>(
-                mesh -> elems.nodeTags.begin() + i * mesh -> elems.noNodesPerElement,
-                mesh -> elems.nodeTags.begin() + (i + 1) * mesh -> elems.noNodesPerElement);
+        auto elementNodeTags = std::vector<std::size_t>(
+                mesh -> elems.nodeTags.cbegin() + i * mesh -> elems.noNodesPerElement,
+                mesh -> elems.nodeTags.cbegin() + (i + 1) * mesh -> elems.noNodesPerElement);
         double det = mesh -> global.determinants[i];
 
         double integral = 0;

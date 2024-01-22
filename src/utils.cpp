@@ -72,7 +72,7 @@ std::vector<double> utils::midpoint(std::vector<double> &p1, std::vector<double>
     return {};
 }
 
-std::tuple<double, double, double> utils::projectionOnPlane(std::tuple<double, double, double> &point, std::vector<double> &plane) {
+std::tuple<double, double, double> utils::projectionOnPlane(std::tuple<double, double, double> &point, const std::vector<double> &plane) {
     try {
         if (plane.size() == 4) {
 

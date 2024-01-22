@@ -25,7 +25,7 @@ namespace utils {
 
     void generateCombinations(std::vector<std::vector<int> >&, int, int);
 
-    std::tuple<double, double, double> projectionOnPlane(std::tuple<double, double, double>&, std::vector<double>&);
+    std::tuple<double, double, double> projectionOnPlane(std::tuple<double, double, double>&, const std::vector<double>&);
 
     std::vector<double> midpoint(std::vector<double>&, std::vector<double>&);
 

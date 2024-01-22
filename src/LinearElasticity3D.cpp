@@ -250,7 +250,7 @@ void LinearElasticity3D::solveDirectProblem() {
 
     std::vector<double> tempDirBC;
 
-    for (int idx : constrainedNodes) {
+    for (const auto& idx : constrainedNodes) {
         std::size_t tag = reverseNodeIndexes[idx];
 
         tempDirBC = dirichlet_bc[tag];

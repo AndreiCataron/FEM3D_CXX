@@ -84,7 +84,7 @@ protected:
 
 public:
     // getters
-    const Mesh& getMesh() const;
+    [[nodiscard]] const Mesh& getMesh() const;
     std::unordered_map<std::size_t, int> getNodeIndexes();
     std::vector<int> getConstrainedNodes();
     std::vector<int> getFreeNodes();

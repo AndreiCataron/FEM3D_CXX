@@ -39,6 +39,7 @@ public:
 private:
     void computeInverseJacobians();
     void computeNormalsAtFaceIntegrationPoints();
+    void findBoundaryAdjacentElements();
 };
 
 

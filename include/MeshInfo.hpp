@@ -37,6 +37,10 @@ struct BoundaryData {
     // basis functions values at triangleLocalCoord
     std::vector<double> triangleBasisFunctionsValues = {};
     int noNodesPerTriangle = -1;
+
+    // local coordinates in corresponding elements of global triangle integration points
+    std::vector<double> localCoordsinElements = {};
+    std::vector<double> gradientsAtTriangleIntPoints = {};
 };
 
 struct ElementData {
@@ -55,6 +59,9 @@ struct ElementData {
     std::vector<double> basisFunctionsValues = {};
     std::vector<double> basisFunctionsGradients = {};
     int noNodesPerElement = -1;
+
+    // tags of elements adjacent to the boundary
+    std::vector<std::size_t> bdryAdjacentElems = {};
 };
 
 #endif //FEM_MESHINFO_HPP

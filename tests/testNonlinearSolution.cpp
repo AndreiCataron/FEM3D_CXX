@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
     };
 
     auto par = std::make_shared<ParamsLE>(ParamsLE{
-            0.05 , // h,
+            0.15 , // h,
             10,
             1,
             "x != 1", // dirichlet BC

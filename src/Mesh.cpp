@@ -102,6 +102,29 @@ void Mesh::computeNormalsAtFaceIntegrationPoints() {
     }
 }
 
+void Mesh::findBoundaryAdjacentElements() {
+    bdry.localCoordsinElements.reserve(global.trianglesGlobalCoord.size());
+    for (auto it = global.trianglesGlobalCoord.cbegin(); it != global.trianglesGlobalCoord.cend(); it += 3) {
+        // find element containing integration point
+        std::vector<std::size_t> elemTags;
+        gmsh::model::mesh::getElementsByCoordinates(*it, *(it + 1), *(it + 2), elemTags, 3);
+        elems.bdryAdjacentElems.emplace_back(elemTags[0]);
+
+        // get local coordinates in reference element
+        double u, v, w;
+        gmsh::model::mesh::getLocalCoordinatesInElement(elemTags[0], *it, *(it + 1), *(it + 2), u, v, w);
+
+        bdry.localCoordsinElements.emplace_back(u);
+        bdry.localCoordsinElements.emplace_back(v);
+        bdry.localCoordsinElements.emplace_back(w);
+    }
+
+    // get basis function gradients at points found above
+    std::string functionSpaceType = "GradLagrange" + std::to_string(params -> element_order);
+    int numOrient, numComp;
+    gmsh::model::mesh::getBasisFunctions(elems.elementType, bdry.localCoordsinElements, functionSpaceType, numComp, bdry.gradientsAtTriangleIntPoints, numOrient);
+}
+
 void Mesh::initMesh() {
     if (params == nullptr) {
         gmsh::option::setNumber("Mesh.CharacteristicLengthMax", 0.1);
@@ -206,6 +229,14 @@ void Mesh::initMesh() {
 
     computeInverseJacobians();
     computeNormalsAtFaceIntegrationPoints();
+
+    auto start = std::chrono::steady_clock::now();
+
+    findBoundaryAdjacentElements();
+
+    auto end = std::chrono::steady_clock::now();
+    auto diff = end - start;
+    std::cout << "ADjacient bdry: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << '\n';
 }
 
 void Mesh::showMesh(int argc, char **argv) {
