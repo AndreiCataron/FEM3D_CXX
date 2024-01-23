@@ -125,7 +125,8 @@ void FEM3DVector::outputData(const std::string& file, bool boundaryError, const 
     myFile.close();
 }
 
-void FEM3DVector::computeApproximateBoundaryStresses() {
+void FEM3DVector::computeApproximateBoundaryGradients() {
+    approx_grads.reserve(mesh -> global.trianglesGlobalCoord.size() / 3);
     for (int i = 0; i < mesh -> global.trianglesGlobalCoord.size() / 3; i++) {
         auto tag = mesh -> elems.bdryAdjacentElems[i];
         if (auto it = std::find(mesh -> elems.elementTags.cbegin(), mesh -> elems.elementTags.cend(), tag);
@@ -154,6 +155,7 @@ void FEM3DVector::computeApproximateBoundaryStresses() {
                 approxGradient.row(1) += displacements(3 * index + 1) * elementGrads.transpose();
                 approxGradient.row(2) += displacements(3 * index + 2) * elementGrads.transpose();
             }
+            approx_grads.emplace_back(approxGradient);
         }
     }
 }

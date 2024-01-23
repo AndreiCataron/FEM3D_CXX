@@ -57,7 +57,7 @@ public:
     FEM3D(std::shared_ptr<Params> const&, std::shared_ptr<Mesh> const&);
 
     // methods
-    void setBoundaryConditions() noexcept;
+    void setBoundaryConditions(auto&&...) noexcept;
 
     virtual void resetBoundaryConditions() noexcept = 0;
 
@@ -85,6 +85,7 @@ protected:
 public:
     // getters
     [[nodiscard]] const Mesh& getMesh() const;
+    std::shared_ptr<Params> getParamsPointer();
     std::unordered_map<std::size_t, int> getNodeIndexes();
     std::vector<int> getConstrainedNodes();
     std::vector<int> getFreeNodes();

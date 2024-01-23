@@ -23,6 +23,10 @@ struct Params{
     unsigned int triangle_quadrature_precision;
     // Order of Lagrange polynomials
     int element_order;
+public:
+    void swapBC() {
+        std::swap(dirichlet_bc, neumann_bc);
+    };
 };
 
 struct ParamsVector : Params{

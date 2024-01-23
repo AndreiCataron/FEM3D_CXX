@@ -42,6 +42,16 @@ Eigen::Vector3d LinearElasticity3D::h(const int nodeId) {
     return integrationPointsStresses[nodeId] * mesh -> global.normals[nodeId];
 }
 
+void LinearElasticity3D::computeApproximatedStresses() noexcept {
+    approximatedStresses.reserve(mesh -> global.trianglesGlobalCoord.size() / 3);
+    for (const auto& grad : approx_grads) {
+        Eigen::Matrix3d strain = 0.5 * (grad + grad.transpose());
+        Eigen::Matrix3d stress = (paramsLE_ -> E) / (1 + paramsLE_ -> nu) * (strain + (paramsLE_ -> nu) / (1 - 2 * paramsLE_ -> nu) * strain.trace() * Eigen::Matrix3d::Identity());
+
+        approximatedStresses.emplace_back(stress);
+    }
+}
+
 void LinearElasticity3D::stiffnessIterations(int start, int end) {
     for (int i = start; i < end; i++) {
         std::vector<std::size_t> elementNodeTags = std::vector<std::size_t>(
@@ -260,9 +270,24 @@ void LinearElasticity3D::solveDirectProblem() {
         constrainedValues(3 * idx + 2) = tempDirBC[2];
     }
 
-    displacements.head(3 * constrainedNodes.size()) = constrainedValues;
+//    std::vector<int> freeIndexes, constrainedIndexes;
+//    freeIndexes.reserve(3 * freeNodes.size());
+//    constrainedIndexes.reserve(3 * constrainedNodes.size());
+//    for (const auto& idx : freeNodes) {
+//        freeIndexes.emplace_back(3 * idx);
+//        freeIndexes.emplace_back(3 * idx + 1);
+//        freeIndexes.emplace_back(3 * idx + 2);
+//    }
+//    for (const auto& idx : constrainedNodes) {
+//        constrainedIndexes.emplace_back(3 * idx);
+//        constrainedIndexes.emplace_back(3 * idx + 1);
+//        constrainedIndexes.emplace_back(3 * idx + 2);
+//    }
 
-    load_vector = (load_vector.tail(3 * freeNodes.size()) -
+    displacements.head(3 * constrainedNodes.size()) = constrainedValues;
+    //displacements(constrainedIndexes) = constrainedValues;
+
+     load_vector = (load_vector.tail(3 * freeNodes.size()) -
             stiffness_matrix.bottomRows(3 * freeNodes.size()).leftCols(3 * constrainedNodes.size()) * constrainedValues).eval();
 
     stiffness_matrix = stiffness_matrix.bottomRightCorner(3 * freeNodes.size(), 3 * freeNodes.size()).eval();

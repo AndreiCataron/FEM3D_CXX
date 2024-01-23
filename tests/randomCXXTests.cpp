@@ -650,75 +650,75 @@
 //    std::cout << factorial_cxx14(n);
 //    return 0;
 //}
-
-#include <iostream>
-
-using namespace std;
-
-class Poligon{
-private:
-    int nr_laturi;
-protected:
-    double arie;
-public:
-    Poligon() {
-        cout << "Constructor Poligon" << endl;
-    }
-
-    virtual void calculeaza_arie() = 0;
-    double get_arie() {
-        return this -> arie;
-    };
-
-    ~Poligon() {
-        cout << "Destructor Poligon" << endl;
-    }
-};
-
-class Triunghi : public Poligon {
-private:
-    double a, b, c;
-public:
-    Triunghi(double a, double b, double c) {
-        this -> a = a;
-        this -> b = b;
-        this -> c = c;
-        cout << "Constructor Triunghi" << endl;
-    }
-
-    void calculeaza_arie() override{
-        cout << 2;
-    }
-};
-
-class Patrulater : public Poligon{
-public:
-    Patrulater() {
-        cout << "Connstructor Patrulater" << endl;
-    }
-
-    ~Patrulater() {
-        cout << "Destructor Patrulater" << endl;
-    }
-};
-
-class Patrat : public Patrulater{
-private:
-    double l;
-public:
-    Patrat(double latura) : Patrulater(){
-        cout << "Constructor Patrat" << endl;
-        this -> l = latura;
-    }
-
-    void calculeaza_arie() override {
-        this -> arie =  l * l;
-    }
-
-    ~Patrat() {
-        cout << "Destructor Patrat" << endl;
-    }
-};
+//
+//#include <iostream>
+//
+//using namespace std;
+//
+//class Poligon{
+//private:
+//    int nr_laturi;
+//protected:
+//    double arie;
+//public:
+//    Poligon() {
+//        cout << "Constructor Poligon" << endl;
+//    }
+//
+//    virtual void calculeaza_arie() = 0;
+//    double get_arie() {
+//        return this -> arie;
+//    };
+//
+//    ~Poligon() {
+//        cout << "Destructor Poligon" << endl;
+//    }
+//};
+//
+//class Triunghi : public Poligon {
+//private:
+//    double a, b, c;
+//public:
+//    Triunghi(double a, double b, double c) {
+//        this -> a = a;
+//        this -> b = b;
+//        this -> c = c;
+//        cout << "Constructor Triunghi" << endl;
+//    }
+//
+//    void calculeaza_arie() override{
+//        cout << 2;
+//    }
+//};
+//
+//class Patrulater : public Poligon{
+//public:
+//    Patrulater() {
+//        cout << "Connstructor Patrulater" << endl;
+//    }
+//
+//    ~Patrulater() {
+//        cout << "Destructor Patrulater" << endl;
+//    }
+//};
+//
+//class Patrat : public Patrulater{
+//private:
+//    double l;
+//public:
+//    Patrat(double latura) : Patrulater(){
+//        cout << "Constructor Patrat" << endl;
+//        this -> l = latura;
+//    }
+//
+//    void calculeaza_arie() override {
+//        this -> arie =  l * l;
+//    }
+//
+//    ~Patrat() {
+//        cout << "Destructor Patrat" << endl;
+//    }
+//};
 
 //class Desen{
 //private:
@@ -735,19 +735,306 @@ public:
 //    }
 //};
 
+//int main() {
+//    Patrat p(2);
+//    Triunghi t(1, 2, 3);
+//    Poligon* poli1 = &p;
+//    Poligon* poli2 = &t;
+//
+//    Poligon* v[3];
+//
+//    vector<Poligon*> vec;
+//    vec.push_back(poli1);
+//    vec.push_back(poli2);
+//
+//   //vector<int> v = {1, 2, 3};
+//    cout << v[2] << endl;
+//
+//}
+
+//#include <iostream>
+//#include<string>
+//
+//using namespace std;
+//
+//class Biblioteca {
+//    const int id;
+//    string nume;
+//    int nrCarti;
+//    char* carti;
+//
+//public:
+//    void Afisare()
+//    {
+//        cout << endl << "Biblioteca: " << this->id << endl << "cu numele: " << this->nume << endl << "are urm nr de carti: " << this->nrCarti << endl << "cu umr carti: ";
+//        if (this->carti != nullptr) {
+//            for (int i = 0; i < this->nrCarti; i++) {
+//                cout << this->carti[i] << " ";
+//            }
+//        }
+//        else {
+//            cout << "Nu exista carti in aceasta biblioteca";
+//        }
+//    }
+//
+//    Biblioteca() : id(0) {
+//        this->nume = "Necunoscut";
+//        this->nrCarti = 0;
+//        this->carti = nullptr;
+//    }
+//    Biblioteca(string nume, int nrCarti, char* cartiBiblioteca) : id(1) {
+//        this->nume = nume;
+//        this->nrCarti = nrCarti;
+//
+//        for (int i = 0; i < this->nrCarti; i++) {
+//            carti[i] = cartiBiblioteca[i];
+//        }
+//
+//
+//    }
+//    Biblioteca(const Biblioteca& copie) :id(2) {
+//        this->nume = copie.nume;
+//        this->nrCarti = copie.nrCarti;
+//
+//        if (copie.carti != nullptr) {
+//            this->carti = new char[copie.nrCarti];
+//            for (int i = 0; i < copie.nrCarti; i++) {
+//                this->carti[i] = copie.carti[i];
+//            }
+//        }
+//        else {
+//            this->carti = nullptr;
+//        }
+//    }
+//    void operator = (const Biblioteca& copie) {
+//        this->nume = copie.nume;
+//        this->nrCarti = copie.nrCarti;
+//        if (this->carti != nullptr) {
+//            delete[] this->carti;
+//            this->carti = nullptr;
+//        }
+//        if (copie.carti != nullptr) {
+//            this->carti = new char[copie.nrCarti];
+//            for (int i = 0; i < copie.nrCarti; i++) {
+//                this->carti[i] = copie.carti[i];
+//            }
+//        }
+//        else {
+//            this->carti = nullptr;
+//        }
+//
+//    }
+//
+//    string getNume() {
+//        return this->nume;
+//    }
+//
+//    void setNume(string numeNou) {
+//        if (numeNou.length() != 0) {
+//            this->nume = numeNou;
+//        }
+//        else {
+//            throw " Nume incompatibil ";
+//        }
+//    }
+//
+//    int* getCarti() {
+//        int* cartiReturnat = new int[this->nrCarti];
+//        for (int i = 0; i < this->nrCarti; i++) {
+//            cartiReturnat[i] = this->carti[i];
+//
+//        }
+//        return cartiReturnat;
+//
+//    }
+//
+//    void setnrcarti(int valoareNoua) {
+//        if (valoareNoua) {
+//            this->nrCarti = valoareNoua;
+//        }
+//        else {
+//            throw "Valoare Negativa";
+//        }
+//
+//    }
+//
+//    void setcarti(int* vectornou, int valNoua) {
+//        setnrcarti(valNoua);
+//        if (this->carti != nullptr) {
+//            delete[]this->carti;
+//
+//        }
+//        for (int i = 0; i < this->nrCarti; i++) {
+//            this->carti[i] = vectornou[i];
+//
+//        }
+//
+//    }
+//    void operator*=(int multiplicator) {
+//        this->nrCarti *= multiplicator;
+//    }
+//
+//    bool operator>=(const Biblioteca* copie) {
+//        return this->nrCarti >= copie->nrCarti;
+//    }
+//
+//    bool operator <(const Biblioteca* copie) {
+//        return this->nrCarti < copie->nrCarti;
+//    }
+//    bool operator!() {
+//        return this->nrCarti = 0;
+//    }
+//
+//    int operator()(int valoare) {
+//        return this->nrCarti + valoare;
+//    }
+//
+//
+//
+//
+//};
+//
+//int main() {
+//    string s = "Biblioteca judeteana";
+//    Biblioteca nationala;
+//    nationala.Afisare();
+//    Biblioteca judeteana(s, 3, { "Razboi si pace", "Jules Verne", "Psihologie" });
+//}
+
+////#define _CRT_SECURE_NO_WARNINGS
+//#include <iostream>
+//#include<string>
+//#include <vector>
+//
+//
+//using namespace std;
+//
+//class Biblioteca {
+//    const int id;
+//    string nume;
+//    int nrCarti;
+//    vector<string> carti;
+//
+//public:
+//    void Afisare()
+//    {
+//        cout << endl << "Biblioteca: " << this->id << endl << "cu numele: " << this->nume << endl << "are urm nr de carti: " << this->nrCarti << endl << "cu umr carti: ";
+//        if (this->carti.size() > 0) {
+//            for (int i = 0; i < this->nrCarti; i++) {
+//                cout << this->carti[i] << " ";
+//            }
+//        }
+//        else {
+//            cout << "Nu exista carti in aceasta biblioteca";
+//        }
+//    }
+//
+//    Biblioteca() : id(0) {
+//        this->nume = "Necunoscut";
+//        this->nrCarti = 0;
+//        this->carti = {};
+//    }
+//    Biblioteca(string nume, int nrCarti, vector<string> cartiBiblioteca) : id(1) {
+//        this->nume = nume;
+//        this->nrCarti = nrCarti;
+//        this->carti = cartiBiblioteca;
+//
+//
+//    }
+//    Biblioteca(const Biblioteca& copie) :id(2) {
+//        this->nume = copie.nume;
+//        this->nrCarti = copie.nrCarti;
+//
+//        this->carti = copie.carti;
+//    }
+//    void operator = (const Biblioteca& copie) {
+//        this->nume = copie.nume;
+//        this->nrCarti = copie.nrCarti;
+//        this->carti = copie.carti;
+//
+//    }
+//
+//    string getNume() {
+//        return this->nume;
+//    }
+//
+//    void setNume(string numeNou) {
+//        if (numeNou.length() != 0) {
+//            this->nume = numeNou;
+//        }
+//        else {
+//            throw " Nume incompatibil ";
+//        }
+//    }
+//
+//    vector<string> getCarti() {
+//        return this->carti;
+//
+//    }
+//
+//    void setnrcarti(int valoareNoua) {
+//        if (valoareNoua) {
+//            this->nrCarti = valoareNoua;
+//        }
+//        else {
+//            throw "Valoare Negativa";
+//        }
+//
+//    }
+//
+//    void setcarti(vector<string> vectornou, int valNoua) {
+//        setnrcarti(valNoua);
+//        this->carti = vectornou;
+//
+//    }
+//    void operator*=(int multiplicator) {
+//        this->nrCarti *= multiplicator;
+//    }
+//
+//    bool operator>=(const Biblioteca* copie) {
+//        return this->nrCarti >= copie->nrCarti;
+//    }
+//
+//    bool operator <(const Biblioteca* copie) {
+//        return this->nrCarti < copie->nrCarti;
+//    }
+//    bool operator!() {
+//        return this->nrCarti = 0;
+//    }
+//
+//    int operator()(int valoare) {
+//        return this->nrCarti + valoare;
+//    }
+//
+//
+//
+//
+//};
+//
+//int main() {
+//    Biblioteca nationala;
+//    nationala.Afisare();
+//    int nrcarti = 3;
+//    vector<string> v = {"Prima", "A doua", "A tria"};
+//    Biblioteca judeteana("Biblioteca judeteana", 3, v);
+//
+//
+//}
+
+#include <iostream>
+
+void test() {
+    std::cout << "empty test" << '\n';
+}
+
+void test(int a) {
+    std::cout << "int test" << '\n';
+}
+
+void doSomething(auto&&... args) {
+    test(std::forward<decltype(args)>(args)...);
+}
+
 int main() {
-    Patrat p(2);
-    Triunghi t(1, 2, 3);
-    Poligon* poli1 = &p;
-    Poligon* poli2 = &t;
-
-    Poligon* v[3];
-
-    vector<Poligon*> vec;
-    vec.push_back(poli1);
-    vec.push_back(poli2);
-
-   //vector<int> v = {1, 2, 3};
-    cout << v[2] << endl;
-
+    doSomething(4);
 }

@@ -84,9 +84,9 @@ void FEM3D::setNeumannBoundaryConditions() noexcept {
     }
 }
 
-void FEM3D::setBoundaryConditions() noexcept {
+void FEM3D::setBoundaryConditions(auto&&... args) noexcept {
     setNeumannBoundaryConditions();
-    setDirichletBoundaryConditions();
+    setDirichletBoundaryConditions(std::forward<decltype(args)>(args)...);
     indexConstrainedNodes();
     indexFreeNodes();
 }
@@ -111,6 +111,10 @@ void FEM3D::indexFreeNodes() noexcept {
 
 const Mesh& FEM3D::getMesh() const {
     return *mesh;
+}
+
+std::shared_ptr<Params> FEM3D::getParamsPointer() {
+    return params_;
 }
 
 std::unordered_map<std::size_t, int> FEM3D::getNodeIndexes() {

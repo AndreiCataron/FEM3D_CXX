@@ -4,7 +4,7 @@
 #include <string>
 #include <memory>
 #include <set>
-#include <eigen3/Eigen/Dense>
+#include </opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3/Eigen/Dense>
 #include "params.hpp"
 #include "utils.hpp"
 #include "MeshInfo.hpp"

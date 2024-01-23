@@ -15,13 +15,15 @@ private:
 protected:
     // store for each node on the boundary [tag : dirichlet bc]
     DirichletMap dirichlet_bc;
+    // after computing solution store approximated gradients at faces integration points
+    std::vector<Eigen::Matrix3d> approx_grads = {};
 
 public:
     explicit FEM3DVector(std::shared_ptr<ParamsVector> const&);
     FEM3DVector(std::shared_ptr<ParamsVector> const&, std::shared_ptr<Mesh> const&);
 
     void outputData(const std::string& file, bool boundaryError, const std::vector<double>& plane) override;
-    void computeApproximateBoundaryStresses();
+    void computeApproximateBoundaryGradients();
 
     void computeL2Error() override;
     void computeH1Error() override;

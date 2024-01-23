@@ -25,7 +25,7 @@ add_executable(stiff test_stiffnessAndLoad.cpp ../include/FEM3D.hpp ../src/FEM3D
 add_executable(exam testExampleSolutions.cpp ../include/FEM3D.hpp ../src/FEM3D.cpp ../include/FEM3Dvector.hpp ../src/FEM3Dvector.cpp ../include/LinearElasticity3D.hpp ../src/LinearElasticity3D.cpp ../include/utils.hpp ../src/utils.cpp ../include/Mesh.hpp ../src/Mesh.cpp ../include/params.hpp)
 add_executable(util test_utils.cpp ../include/utils.hpp ../src/utils.cpp)
 add_executable(examnonlin ../include/FEM3D.hpp ../src/FEM3D.cpp ../include/FEM3Dvector.hpp ../src/FEM3Dvector.cpp ../include/LinearElasticity3D.hpp ../src/LinearElasticity3D.cpp ../include/utils.hpp ../src/utils.cpp ../include/Mesh.hpp ../src/Mesh.cpp ../include/params.hpp testNonlinearSolution.cpp)
-add_executable(alter ../include/Algoritm.hpp ../src/Algoritm.cpp testAlternant.cpp)
+add_executable(alter ../include/FEM3D.hpp ../src/FEM3D.cpp ../include/FEM3Dvector.hpp ../src/FEM3Dvector.cpp ../include/LinearElasticity3D.hpp ../src/LinearElasticity3D.cpp ../include/utils.hpp ../src/utils.cpp ../include/Mesh.hpp ../src/Mesh.cpp ../include/params.hpp ../include/Algoritm.hpp ../src/Algoritm.cpp testAlternant.cpp)
 
 target_link_libraries(sbc LINK_PUBLIC "${FOO_LIB}")
 
@@ -36,6 +36,7 @@ target_link_libraries(sbc PUBLIC OpenMP::OpenMP_CXX)
 target_link_libraries(cnsbc PUBLIC OpenMP::OpenMP_CXX)
 target_link_libraries(exam PUBLIC OpenMP::OpenMP_CXX)
 target_link_libraries(examnonlin PUBLIC OpenMP::OpenMP_CXX)
+target_link_libraries(alter PUBLIC OpenMP::OpenMP_CXX)
 
 target_include_directories(sbc PUBLIC "${FOO_PATH}")
 
@@ -66,6 +67,10 @@ target_include_directories(exam PUBLIC "${FOO_PATH}")
 target_link_libraries(examnonlin LINK_PUBLIC "${FOO_LIB}")
 
 target_include_directories(examnonlin PUBLIC "${FOO_PATH}")
+
+target_link_libraries(alter LINK_PUBLIC "${FOO_LIB}")
+
+target_include_directories(alter PUBLIC "${FOO_PATH}")
 
 add_test(NAME testSetBoundaryConditions COMMAND sbc)
 add_test(NAME testCheckNodeSatisfiesBoundaryCondition COMMAND cnsbc)

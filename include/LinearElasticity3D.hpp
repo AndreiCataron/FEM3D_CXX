@@ -14,6 +14,7 @@ private:
     std::vector<Eigen::Triplet<double> > tripletList;
     // stresses at face integration points
     std::vector<Eigen::Matrix3d> integrationPointsStresses = {};
+    std::vector<Eigen::Matrix3d> approximatedStresses = {};
     // for parallelism
     std::mutex mtx_stiff, mtx_neu;
 
@@ -24,6 +25,7 @@ public:
     void resetBoundaryConditions() noexcept override;
 
     void computeIntegrationPointsStresses() noexcept;
+    void computeApproximatedStresses() noexcept;
 
     void computeStiffnessMatrixAndLoadVector() override;
 
