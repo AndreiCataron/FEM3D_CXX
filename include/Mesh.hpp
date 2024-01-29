@@ -32,7 +32,7 @@ public:
     friend class LinearElasticity3D;
 
     void getNodesCoordinates();
-    static void cubeMesh();
+    static void cubeMesh(double, double, double, double);
     void initMesh();
     static void showMesh(int, char**);
 

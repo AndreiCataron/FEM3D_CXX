@@ -84,13 +84,6 @@ void FEM3D::setNeumannBoundaryConditions() noexcept {
     }
 }
 
-void FEM3D::setBoundaryConditions(auto&&... args) noexcept {
-    setNeumannBoundaryConditions();
-    setDirichletBoundaryConditions(std::forward<decltype(args)>(args)...);
-    indexConstrainedNodes();
-    indexFreeNodes();
-}
-
 void FEM3D::indexFreeNodes() noexcept {
     // get nodes
     std::vector<std::size_t> nodeTags;

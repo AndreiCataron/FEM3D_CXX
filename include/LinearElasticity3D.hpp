@@ -5,6 +5,8 @@
 #include "params.hpp"
 #include <mutex>
 
+using stressVector = std::vector<Eigen::Matrix3d>;
+
 class LinearElasticity3D : public FEM3DVector {
 private:
     // ParamsLE paramsLE_;
@@ -13,8 +15,8 @@ private:
     Eigen::MatrixXd D, Mk;
     std::vector<Eigen::Triplet<double> > tripletList;
     // stresses at face integration points
-    std::vector<Eigen::Matrix3d> integrationPointsStresses = {};
-    std::vector<Eigen::Matrix3d> approximatedStresses = {};
+    stressVector integrationPointsStresses = {};
+    // std::vector<Eigen::Matrix3d> approximatedStresses = {};
     // for parallelism
     std::mutex mtx_stiff, mtx_neu;
 
@@ -36,6 +38,10 @@ private:
 
     void stiffnessIterations(int, int);
     void neumannIterations(int, int);
+
+public:
+    void setStresses(stressVector);
+    stressVector getStresses();
 };
 
 #endif

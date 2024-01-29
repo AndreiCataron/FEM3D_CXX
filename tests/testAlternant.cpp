@@ -31,12 +31,16 @@ int main(int argc, char **argv) {
                                    - nu * sig / E * x * z};
     };
 
+    auto initialg = [] (double x, double y, double z) {
+        return std::vector<double>{0, 0, 0};
+    };
+
     auto par = std::make_shared<ParamsLE>(ParamsLE{
-            0.15 , // h,
+            0.2 , // h,
             10,
             1,
-            "x != 1", // dirichlet BC
-            "x == 1", // neumann BC
+            "x != 0.5", // dirichlet BC
+            "x == 0.5", // neumann BC
             3, // quadrature precision
             3, // triangle quadrature precision
             1, // order of lagrange polynomials
@@ -56,13 +60,13 @@ int main(int argc, char **argv) {
 
     auto msh = std::make_shared<Mesh>(argc, argv, par);
 
-    Mesh::cubeMesh();
+    Mesh::cubeMesh(0, 0, 0, 0.5);
     msh -> initMesh();
 
     auto fem = std::make_shared<LinearElasticity3D>(par, msh);
 
     Algoritm alg(fem);
 
-    alg.iterations(1, 0, true);
+    alg.iterations(7, 0, true);
 
 }

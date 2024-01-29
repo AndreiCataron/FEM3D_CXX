@@ -32,7 +32,7 @@ void FEM3DVector::setDirichletBoundaryConditions() noexcept {
     }
 }
 
-void FEM3DVector::setDirichletBoundaryConditions(const DirichletMap& conditionMap) noexcept {
+void FEM3DVector::setDirichletBoundaryConditions(DirichletMap& conditionMap) noexcept {
     dirichlet_bc = conditionMap;
 }
 

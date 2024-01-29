@@ -19,7 +19,7 @@ Mesh::Mesh(int argc, char **argv) {
 
 Mesh::Mesh(int argc, char **argv, const std::string& meshType) : Mesh(argc, argv) {
     if (meshType.compare("unit_cube") == 1) {
-        cubeMesh();
+        cubeMesh(0, 0, 0, 1);
     }
 }
 
@@ -43,8 +43,8 @@ void Mesh::getNodesCoordinates() {
     }
 }
 
-void Mesh::cubeMesh() {
-    gmsh::model::occ::addBox(-1, -1, -1, 2, 2, 2, 1000);
+void Mesh::cubeMesh(double x, double y, double z, double l) {
+    gmsh::model::occ::addBox(x, y, z, l, l, l, 1000);
     gmsh::model::occ::synchronize();
 }
 

@@ -35,6 +35,7 @@ void Algoritm::unaccessibleDirichletPrep() {
     LE -> resetBoundaryConditions();
 
     LE -> setBoundaryConditions(nextStepDir);
+    LE -> setStresses(initialStresses);
 }
 
 
@@ -47,12 +48,22 @@ void Algoritm::unaccessibleNeumannPrep() {
     auto par = LE -> getParamsPointer();
     par -> swapBC();
 
-    LE -> setBoundaryConditions();
+    LE -> setBoundaryConditions(initialDirichletCondition);
 }
 
 void Algoritm::iteration(int k) {
     if (k == 0) {
         LE -> setBoundaryConditions();
+        LE -> computeIntegrationPointsStresses();
+        initialDirichletCondition = LE -> getDirichletBC();
+        initialStresses = LE -> getStresses();
+        auto dirichletBC = LE -> getDirichletBC();
+        for (const auto& [tag, bc] : dirichletBC) {
+            dirichletBC[tag] = std::vector<double>{0, 0, 0};
+        }
+        LE -> resetBoundaryConditions();
+        LE -> setBoundaryConditions(dirichletBC);
+        LE -> setStresses(initialStresses);
     }
     else if (k % 2 == 1) {
         unaccessibleDirichletPrep();

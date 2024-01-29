@@ -78,6 +78,7 @@ protected:
 
     void setNeumannBoundaryConditions() noexcept;
     virtual void setDirichletBoundaryConditions() noexcept = 0;
+    virtual void setDirichletBoundaryConditions(std::unordered_map<std::size_t, std::vector<double> >&) noexcept = 0;
 
     virtual void indexConstrainedNodes() noexcept = 0;
     void indexFreeNodes() noexcept;
@@ -95,5 +96,12 @@ public:
     [[nodiscard]] double getL2Error() const;
     [[nodiscard]] double getH1Error() const;
 };
+
+void FEM3D::setBoundaryConditions(auto&&... args) noexcept {
+    setNeumannBoundaryConditions();
+    setDirichletBoundaryConditions(std::forward<decltype(args)>(args)...);
+    indexConstrainedNodes();
+    indexFreeNodes();
+}
 
 #endif

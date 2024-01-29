@@ -30,7 +30,7 @@ public:
 
 private:
     void setDirichletBoundaryConditions() noexcept override;
-    void setDirichletBoundaryConditions(const DirichletMap&) noexcept;
+    void setDirichletBoundaryConditions(DirichletMap&) noexcept override;
     void indexConstrainedNodes() noexcept override;
 
 public:

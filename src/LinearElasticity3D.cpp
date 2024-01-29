@@ -5,24 +5,24 @@
 #include <eigen3/Eigen/IterativeLinearSolvers>
 #include <thread>
 #include <future>
+#include <utility>
 
-LinearElasticity3D::LinearElasticity3D(std::shared_ptr<ParamsLE> const& params) : FEM3DVector(params), paramsLE_(params) {
-    computeIntegrationPointsStresses();
-}
+LinearElasticity3D::LinearElasticity3D(std::shared_ptr<ParamsLE> const& params) : FEM3DVector(params), paramsLE_(params) {}
 
-LinearElasticity3D::LinearElasticity3D(std::shared_ptr<ParamsLE> const& params, std::shared_ptr<Mesh> const& msh) : FEM3DVector(params, msh), paramsLE_(params) {
-    computeIntegrationPointsStresses();
-}
+LinearElasticity3D::LinearElasticity3D(std::shared_ptr<ParamsLE> const& params, std::shared_ptr<Mesh> const& msh) : FEM3DVector(params, msh), paramsLE_(params) {}
 
 void LinearElasticity3D::resetBoundaryConditions() noexcept {
     dirichlet_bc.clear();
+    approx_grads.clear();
     integrationPointsStresses.clear();
     freeNodes.clear();
     constrainedNodes.clear();
+    nodeIndexes.clear();
     neumannBoundaryTriangles.clear();
 }
 
 void LinearElasticity3D::computeIntegrationPointsStresses() noexcept {
+    integrationPointsStresses.reserve(mesh -> global.trianglesGlobalCoord.size() / 3);
     for (int i = 0; i < mesh -> global.trianglesGlobalCoord.size() / 3; i++) {
         Eigen::Matrix3d strain = 0.5 * (paramsLE_ -> solution_gradient(mesh -> global.trianglesGlobalCoord[3 * i],
                                                                        mesh -> global.trianglesGlobalCoord[3 * i + 1],
@@ -43,12 +43,14 @@ Eigen::Vector3d LinearElasticity3D::h(const int nodeId) {
 }
 
 void LinearElasticity3D::computeApproximatedStresses() noexcept {
-    approximatedStresses.reserve(mesh -> global.trianglesGlobalCoord.size() / 3);
+    // approximatedStresses.reserve(mesh -> global.trianglesGlobalCoord.size() / 3);
+    integrationPointsStresses.reserve(mesh -> global.trianglesGlobalCoord.size() / 3);
     for (const auto& grad : approx_grads) {
         Eigen::Matrix3d strain = 0.5 * (grad + grad.transpose());
         Eigen::Matrix3d stress = (paramsLE_ -> E) / (1 + paramsLE_ -> nu) * (strain + (paramsLE_ -> nu) / (1 - 2 * paramsLE_ -> nu) * strain.trace() * Eigen::Matrix3d::Identity());
 
-        approximatedStresses.emplace_back(stress);
+        // approximatedStresses.emplace_back(stress);
+        integrationPointsStresses.emplace_back(stress);
     }
 }
 
@@ -315,4 +317,12 @@ void LinearElasticity3D::solveDirectProblem() {
         std::cout << "solving the sparse system failed";
         return;
     }
+}
+
+void LinearElasticity3D::setStresses(stressVector s) {
+    integrationPointsStresses = s;
+}
+
+stressVector LinearElasticity3D::getStresses() {
+    return integrationPointsStresses;
 }
