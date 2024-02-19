@@ -11,6 +11,12 @@ private:
     std::vector<double> projectionPlane = {1, 0, 0, 0};
     DirichletMap initialDirichletCondition = {};
     std::vector<Eigen::Matrix3d> initialStresses = {};
+    std::vector<std::size_t> accesibleBdryTags, unaccessibleBdryTags;
+
+    DirichletMap prevDirichletCondition = {};
+
+    // relaxation factor
+    double theta = 1.5;
 public:
     explicit Algoritm(std::shared_ptr<LinearElasticity3D> const&);
     Algoritm(std::shared_ptr<LinearElasticity3D> const&, std::vector<double>&);

@@ -5,31 +5,33 @@
 #include <eigen3/Eigen/IterativeLinearSolvers>
 #include <thread>
 #include <future>
-#include <utility>
 
 LinearElasticity3D::LinearElasticity3D(std::shared_ptr<ParamsLE> const& params) : FEM3DVector(params), paramsLE_(params) {}
 
 LinearElasticity3D::LinearElasticity3D(std::shared_ptr<ParamsLE> const& params, std::shared_ptr<Mesh> const& msh) : FEM3DVector(params, msh), paramsLE_(params) {}
 
-void LinearElasticity3D::resetBoundaryConditions() noexcept {
-    dirichlet_bc.clear();
-    approx_grads.clear();
-    integrationPointsStresses.clear();
-    freeNodes.clear();
-    constrainedNodes.clear();
-    nodeIndexes.clear();
-    neumannBoundaryTriangles.clear();
+void LinearElasticity3D::resetBoundaryConditions(bool grads, bool nodes) noexcept {
+    if (grads) {
+        approx_grads.clear();
+        integrationPointsStresses.clear();
+    }
+
+    if (nodes) {
+        dirichlet_bc.clear();
+        freeNodes.clear();
+        constrainedNodes.clear();
+        nodeIndexes.clear();
+        bdryFreeNodes.clear();
+        neumannBoundaryTriangles.clear();
+    }
 }
 
 void LinearElasticity3D::computeIntegrationPointsStresses() noexcept {
     integrationPointsStresses.reserve(mesh -> global.trianglesGlobalCoord.size() / 3);
     for (int i = 0; i < mesh -> global.trianglesGlobalCoord.size() / 3; i++) {
-        Eigen::Matrix3d strain = 0.5 * (paramsLE_ -> solution_gradient(mesh -> global.trianglesGlobalCoord[3 * i],
-                                                                       mesh -> global.trianglesGlobalCoord[3 * i + 1],
-                                                                       mesh -> global.trianglesGlobalCoord[3 * i + 2]) +
-                                 (paramsLE_ -> solution_gradient(mesh -> global.trianglesGlobalCoord[3 * i],
-                                                                 mesh -> global.trianglesGlobalCoord[3 * i + 1],
-                                                                 mesh -> global.trianglesGlobalCoord[3 * i + 2])).transpose());
+        Eigen::Matrix3d grd = paramsLE_ -> solution_gradient(mesh -> global.trianglesGlobalCoord[3 * i], mesh -> global.trianglesGlobalCoord[3 * i + 1], mesh -> global.trianglesGlobalCoord[3 * i + 2]);
+        if (i == 0) std::cout << grd << '\n';
+        Eigen::Matrix3d strain = 0.5 * (grd + grd.transpose());
 
         // compute stress tensor
         Eigen::Matrix3d stress = (paramsLE_ -> E) / (1 + paramsLE_ -> nu) * (strain + (paramsLE_ -> nu) / (1 - 2 * paramsLE_ -> nu) * strain.trace() * Eigen::Matrix3d::Identity());
@@ -248,6 +250,7 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
         thread.join();
     }
 
+    std::cout << "IN LE STIFF: " << stiffness_matrix.rows() << ' ' << stiffness_matrix.cols() << ' ' << noNodes << " F: " << freeNodes.size() << " C: " << constrainedNodes.size() << " BF: " << bdryFreeNodes.size() << '\n';
     stiffness_matrix.setFromTriplets(tripletList.begin(), tripletList.end());
 
 }
@@ -289,7 +292,7 @@ void LinearElasticity3D::solveDirectProblem() {
     displacements.head(3 * constrainedNodes.size()) = constrainedValues;
     //displacements(constrainedIndexes) = constrainedValues;
 
-     load_vector = (load_vector.tail(3 * freeNodes.size()) -
+    load_vector = (load_vector.tail(3 * freeNodes.size()) -
             stiffness_matrix.bottomRows(3 * freeNodes.size()).leftCols(3 * constrainedNodes.size()) * constrainedValues).eval();
 
     stiffness_matrix = stiffness_matrix.bottomRightCorner(3 * freeNodes.size(), 3 * freeNodes.size()).eval();

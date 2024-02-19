@@ -1021,20 +1021,21 @@
 //
 //}
 
-#include <iostream>
+//#include <iostream>
+//
+//void test() {
+//    std::cout << "empty test" << '\n';
+//}
+//
+//void test(int a) {
+//    std::cout << "int test" << '\n';
+//}
+//
+//void doSomething(auto&&... args) {
+//    test(std::forward<decltype(args)>(args)...);
+//}
+//
+//int main() {
+//    doSomething(4);
+//}
 
-void test() {
-    std::cout << "empty test" << '\n';
-}
-
-void test(int a) {
-    std::cout << "int test" << '\n';
-}
-
-void doSomething(auto&&... args) {
-    test(std::forward<decltype(args)>(args)...);
-}
-
-int main() {
-    doSomething(4);
-}

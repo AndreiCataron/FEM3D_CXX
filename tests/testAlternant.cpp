@@ -31,16 +31,16 @@ int main(int argc, char **argv) {
                                    - nu * sig / E * x * z};
     };
 
-    auto initialg = [] (double x, double y, double z) {
-        return std::vector<double>{0, 0, 0};
-    };
-
     auto par = std::make_shared<ParamsLE>(ParamsLE{
-            0.2 , // h,
+            0.05 , // h,
             10,
             1,
-            "x != 0.5", // dirichlet BC
-            "x == 0.5", // neumann BC
+//            "x > 0 and (y == 0 or y == 0.5 or z == 0 or z == 0.5 or x == 0.5)", // dirichlet BC
+//            "x == 0", // neumann BC
+//            "x == 0.5",
+//            "x < 0.5 and (y == 0 or y == 0.5 or z == 0 or z == 0.5 or x == 0)",
+            "x >= 0.25 and (y == 0 or y == 0.5 or z == 0 or z == 0.5 or x == 0.5)",
+            "x < 0.25 and (y == 0 or y == 0.5 or z == 0 or z == 0.5 or x == 0.5)",
             3, // quadrature precision
             3, // triangle quadrature precision
             1, // order of lagrange polynomials
@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
 
     utils::checkParamsLE(*par);
 
-    Eigen::initParallel();
+    //Eigen::initParallel();
 
     auto msh = std::make_shared<Mesh>(argc, argv, par);
 
@@ -67,6 +67,6 @@ int main(int argc, char **argv) {
 
     Algoritm alg(fem);
 
-    alg.iterations(7, 0, true);
+    alg.iterations(3, 0, true);
 
 }

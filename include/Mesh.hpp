@@ -40,6 +40,9 @@ private:
     void computeInverseJacobians();
     void computeNormalsAtFaceIntegrationPoints();
     void findBoundaryAdjacentElements();
+
+public:
+    std::unordered_map<std::size_t, CoordTuple> nodeCoords();
 };
 
 

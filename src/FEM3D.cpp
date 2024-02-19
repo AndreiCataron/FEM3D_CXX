@@ -56,10 +56,7 @@ void FEM3D::setNeumannBoundaryConditions() noexcept {
         std::vector<int> elementTypes;
         std::vector<std::vector<std::size_t> > elementTags, nodeTags;
         gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, b.first, b.second);
-
-        mesh -> bdry.boundaryFacesTags.insert(mesh -> bdry.boundaryFacesTags.cend(), elementTags[0].cbegin(), elementTags[0].cend());
-        mesh -> bdry.boundaryFacesNodes.insert(mesh -> bdry.boundaryFacesNodes.cend(), nodeTags[0].cbegin(), nodeTags[0].cend());
-
+        
         for (std::size_t i = 0; i < elementTags[0].size(); i++) {
             std::size_t triangleTag = elementTags[0][i];
             std::vector<std::size_t> faceNodeTags = std::vector<std::size_t>(nodeTags[0].cbegin() + int(i) * mesh -> bdry.noNodesPerTriangle,
@@ -100,10 +97,17 @@ void FEM3D::indexFreeNodes() noexcept {
     }
 }
 
+void FEM3D::resetFEMData() noexcept {
+    displacements = Eigen::VectorXd();
+    tripletList.clear();
+    stiffness_matrix = Eigen::SparseMatrix<double>();
+    load_vector = Eigen::VectorXd();
+}
+
 // getters
 
-const Mesh& FEM3D::getMesh() const {
-    return *mesh;
+std::shared_ptr<Mesh> FEM3D::getMesh() {
+    return mesh;
 }
 
 std::shared_ptr<Params> FEM3D::getParamsPointer() {
@@ -120,6 +124,10 @@ std::vector<int> FEM3D::getConstrainedNodes() {
 
 std::vector<int> FEM3D::getFreeNodes() {
     return freeNodes;
+}
+
+std::vector<std::size_t> FEM3D::getBdryFreeNodeTags() {
+    return bdryFreeNodes;
 }
 
 Eigen::SparseMatrix<double> FEM3D::getStiffnessMatrix() {
@@ -140,4 +148,8 @@ double FEM3D::getL2Error() const {
 
 double FEM3D::getH1Error() const {
     return h1_error;
+}
+
+void FEM3D::setBdryFreeNodeTags(std::vector<std::size_t> v) {
+    bdryFreeNodes = v;
 }

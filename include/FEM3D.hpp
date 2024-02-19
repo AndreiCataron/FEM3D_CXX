@@ -39,6 +39,8 @@ protected:
     std::vector<int> constrainedNodes;
     // indexes of free nodes
     std::vector<int> freeNodes;
+    // tags of free boundary nodes
+    std::vector<std::size_t> bdryFreeNodes;
     // faces where neumann boundary conditions are imposed
     // store for each neumann triangle on the boundary the tag of the respective boundary surface
     std::unordered_map<std::size_t, std::size_t> neumannBoundaryTriangles = {};
@@ -48,6 +50,7 @@ protected:
     Eigen::VectorXd load_vector;
     // solution in displacements
     Eigen::VectorXd displacements;
+    std::vector<Eigen::Triplet<double> > tripletList;
     // errors
     double l2_error = -1, h1_error = -1;
 
@@ -59,12 +62,14 @@ public:
     // methods
     void setBoundaryConditions(auto&&...) noexcept;
 
-    virtual void resetBoundaryConditions() noexcept = 0;
+    virtual void resetBoundaryConditions(bool, bool) noexcept = 0;
 
     virtual void computeStiffnessMatrixAndLoadVector() = 0;
     virtual void solveDirectProblem() = 0;
 
     virtual void outputData(const std::string& file, bool boundaryError, const std::vector<double>& plane) = 0;
+
+    void resetFEMData() noexcept;
 
     virtual void computeL2Error() = 0;
     virtual void computeH1Error() = 0;
@@ -78,23 +83,27 @@ protected:
 
     void setNeumannBoundaryConditions() noexcept;
     virtual void setDirichletBoundaryConditions() noexcept = 0;
-    virtual void setDirichletBoundaryConditions(std::unordered_map<std::size_t, std::vector<double> >&) noexcept = 0;
+    virtual void setDirichletBoundaryConditions(std::unordered_map<std::size_t, std::vector<double> >) noexcept = 0;
 
     virtual void indexConstrainedNodes() noexcept = 0;
     void indexFreeNodes() noexcept;
 
 public:
     // getters
-    [[nodiscard]] const Mesh& getMesh() const;
+    std::shared_ptr<Mesh> getMesh();
     std::shared_ptr<Params> getParamsPointer();
     std::unordered_map<std::size_t, int> getNodeIndexes();
     std::vector<int> getConstrainedNodes();
     std::vector<int> getFreeNodes();
+    std::vector<std::size_t> getBdryFreeNodeTags();
     Eigen::SparseMatrix<double> getStiffnessMatrix();
     Eigen::VectorXd getLoadVector();
     Eigen::VectorXd getDisplacements();
     [[nodiscard]] double getL2Error() const;
     [[nodiscard]] double getH1Error() const;
+
+    // setters
+    void setBdryFreeNodeTags(std::vector<std::size_t>);
 };
 
 void FEM3D::setBoundaryConditions(auto&&... args) noexcept {

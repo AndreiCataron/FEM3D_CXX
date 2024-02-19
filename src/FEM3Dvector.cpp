@@ -28,16 +28,22 @@ void FEM3DVector::setDirichletBoundaryConditions() noexcept {
                     dirichlet_bc[tag] = prescribed_condition;
                 }
             }
+            else {
+                if (std::find(bdryFreeNodes.cbegin(), bdryFreeNodes.cend(), tag) == bdryFreeNodes.cend()) {
+                    bdryFreeNodes.emplace_back(tag);
+                }
+            }
         }
     }
 }
 
-void FEM3DVector::setDirichletBoundaryConditions(DirichletMap& conditionMap) noexcept {
+void FEM3DVector::setDirichletBoundaryConditions(DirichletMap conditionMap) noexcept {
     dirichlet_bc = conditionMap;
 }
 
 void FEM3DVector::indexConstrainedNodes() noexcept {
     for (const auto& n : dirichlet_bc) {
+//        std::cout << nodeIndexes.size() << ' ' << n.first << '\n';
         // check node is not already in node indexes
         if (nodeIndexes.find(n.first) == nodeIndexes.cend()) {
             constrainedNodes.emplace_back(nodeIndexes.size());
@@ -126,6 +132,9 @@ void FEM3DVector::outputData(const std::string& file, bool boundaryError, const 
 }
 
 void FEM3DVector::computeApproximateBoundaryGradients() {
+//    for (const auto& [tag, idx] : nodeIndexes) {
+//        std::cout << tag << ' ' << idx << '\n';
+//    }
     approx_grads.reserve(mesh -> global.trianglesGlobalCoord.size() / 3);
     for (int i = 0; i < mesh -> global.trianglesGlobalCoord.size() / 3; i++) {
         auto tag = mesh -> elems.bdryAdjacentElems[i];
@@ -140,8 +149,9 @@ void FEM3DVector::computeApproximateBoundaryGradients() {
             // the approximate solution gradient at the integration point
             Eigen::Matrix3d approxGradient = Eigen::Matrix3d::Zero();
 
-            Eigen::Vector3d referenceGrads, elementGrads;
+            Eigen::Vector3d elementGrads;
             for (int k = 0; k < mesh -> elems.noNodesPerElement; k++) {
+                Eigen::Vector3d referenceGrads;
                 referenceGrads << mesh -> bdry.gradientsAtTriangleIntPoints[i * 3 * mesh -> elems.noNodesPerElement + 3 * k],
                                   mesh -> bdry.gradientsAtTriangleIntPoints[i * 3 * mesh -> elems.noNodesPerElement + 3 * k + 1],
                                   mesh -> bdry.gradientsAtTriangleIntPoints[i * 3 * mesh -> elems.noNodesPerElement + 3 * k + 2];
@@ -151,10 +161,20 @@ void FEM3DVector::computeApproximateBoundaryGradients() {
                 auto nodeTag = elementNodeTags[k];
                 int index = nodeIndexes[nodeTag];
 
+//                if (displacements(3 * index) == 0 && displacements(3 * index + 1) == 0 && displacements(3 * index + 2) == 0) {
+//                    std::cout << nodeTag << ' ' << index << '\n';
+//                }
                 approxGradient.row(0) += displacements(3 * index) * elementGrads.transpose();
                 approxGradient.row(1) += displacements(3 * index + 1) * elementGrads.transpose();
                 approxGradient.row(2) += displacements(3 * index + 2) * elementGrads.transpose();
+//                if (tag == 6223) {
+//                    std::cout << "NOD: " << nodeTag << '\n' << elementGrads <<'\n'<< approxGradient << '\n';
+//                    std::cout << displacements(3 * index) << ' ' << displacements(3 * index + 1) << ' ' << displacements(3 * index + 2) << '\n';
+//                }
             }
+//            if (approxGradient.isZero(0)) {
+//                std::cout << tag << ' ';
+//            }
             approx_grads.emplace_back(approxGradient);
         }
     }

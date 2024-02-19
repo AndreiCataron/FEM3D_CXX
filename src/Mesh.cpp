@@ -85,6 +85,9 @@ void Mesh::computeNormalsAtFaceIntegrationPoints() {
         std::vector<std::vector<std::size_t> > elementTags, nodeTags;
         gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, b.first, b.second);
 
+        bdry.boundaryFacesTags.insert(bdry.boundaryFacesTags.cend(), elementTags[0].cbegin(), elementTags[0].cend());
+        bdry.boundaryFacesNodes.insert(bdry.boundaryFacesNodes.cend(), nodeTags[0].cbegin(), nodeTags[0].cend());
+
         auto coords = std::vector<double>(it, it + 3 * bdry.triangleNoIntegrationPoints * int(elementTags[0].size()));
         it += bdry.triangleNoIntegrationPoints * int(elementTags[0].size());
 
@@ -123,6 +126,8 @@ void Mesh::findBoundaryAdjacentElements() {
     std::string functionSpaceType = "GradLagrange" + std::to_string(params -> element_order);
     int numOrient, numComp;
     gmsh::model::mesh::getBasisFunctions(elems.elementType, bdry.localCoordsinElements, functionSpaceType, numComp, bdry.gradientsAtTriangleIntPoints, numOrient);
+
+    std::cout << "HATZ: " << global.trianglesGlobalCoord.size() << ' ' << bdry.localCoordsinElements.size() << ' ' << bdry.gradientsAtTriangleIntPoints.size() << '\n';
 }
 
 void Mesh::initMesh() {
@@ -237,9 +242,22 @@ void Mesh::initMesh() {
     auto end = std::chrono::steady_clock::now();
     auto diff = end - start;
     std::cout << "ADjacient bdry: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << '\n';
+
+//    std::cout << "TEST: \n";
+//    for (auto c : bdry.triangleLocalCoord) {
+//        std::cout << c << ' ';
+//    }
+//    std::cout << '\n';
+//    for (int i = 0; i < global.trianglesGlobalCoord.size() / 3; i++) {
+//        std::cout << global.trianglesGlobalCoord[3 * i] << ' ' << global.trianglesGlobalCoord[3 * i + 1] << ' ' << global.trianglesGlobalCoord[3 * i + 2] << '\n' << global.normals[i] << '\n';
+//    }
 }
 
 void Mesh::showMesh(int argc, char **argv) {
     std::set<std::string> args(argv, argv + argc);
     if(!args.count("-nopopup")) gmsh::fltk::run();
+}
+
+std::unordered_map<std::size_t, CoordTuple> Mesh::nodeCoords() {
+    return global.node_coordinates;
 }
