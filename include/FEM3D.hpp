@@ -4,8 +4,6 @@
 #include <unordered_map>
 #include <string>
 #include "../include/exprtk/exprtk.hpp"
-#include <eigen3/Eigen/Dense>
-#include <eigen3/Eigen/Sparse>
 #include "Mesh.hpp"
 #include "params.hpp"
 #include <memory>
@@ -64,6 +62,8 @@ public:
 
     virtual void resetBoundaryConditions(bool, bool) noexcept = 0;
 
+    bool checkNodeSatisfiesCustomEquation(auto&&...) noexcept;
+
     virtual void computeStiffnessMatrixAndLoadVector() = 0;
     virtual void solveDirectProblem() = 0;
 
@@ -111,6 +111,10 @@ void FEM3D::setBoundaryConditions(auto&&... args) noexcept {
     setDirichletBoundaryConditions(std::forward<decltype(args)>(args)...);
     indexConstrainedNodes();
     indexFreeNodes();
+}
+
+bool FEM3D::checkNodeSatisfiesCustomEquation(auto &&... args) noexcept {
+    return int(parseExpression(std::forward<decltype(args)>(args)...));
 }
 
 #endif

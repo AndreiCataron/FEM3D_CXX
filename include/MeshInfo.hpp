@@ -3,7 +3,6 @@
 
 #include <unordered_map>
 #include <vector>
-#include </opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3/Eigen/Dense>
 
 using CoordTuple = std::tuple<double, double, double>;
 

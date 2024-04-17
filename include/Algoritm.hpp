@@ -8,6 +8,12 @@
 class Algoritm {
 private:
     std::shared_ptr<LinearElasticity3D> LE;
+
+    // corespunzatoare portiunii de frontiera Gamma_1 din Nachaoui
+    std::string dirichletBuffer, initialDirichletBdry, initialNeumannBdry;
+
+    DirichletMap buffer;
+
     std::vector<double> projectionPlane = {1, 0, 0, 0};
     DirichletMap initialDirichletCondition = {};
     std::vector<Eigen::Matrix3d> initialStresses = {};
@@ -18,8 +24,8 @@ private:
     // relaxation factor
     double theta = 1.5;
 public:
-    explicit Algoritm(std::shared_ptr<LinearElasticity3D> const&);
-    Algoritm(std::shared_ptr<LinearElasticity3D> const&, std::vector<double>&);
+    Algoritm(std::shared_ptr<LinearElasticity3D> const&, std::string);
+    Algoritm(std::shared_ptr<LinearElasticity3D> const&, std::vector<double>&, std::string);
 
     void iteration(int);
     void iterations(int, double, bool);

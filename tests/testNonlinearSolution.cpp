@@ -67,16 +67,16 @@ int main(int argc, char **argv) {
     };
 
     auto f = [] (double x, double y, double z) {return std::vector<double>{-1.5, 0, 0};};
-//    auto g = [] (double x, double y, double z) {
-//        double nu = 0.33, E = 70.0, sig = 1.5;
-//        return std::vector<double>{sig / (2 * E) * (x * x + nu * y * y + nu * z * z),
-//                                   - nu * sig / E * x * y,
-//                                   - nu * sig / E * x * z};
-//    };
-
     auto g = [] (double x, double y, double z) {
-        return std::vector<double>{0, 0, 0};
+        double nu = 0.33, E = 70.0, sig = 1.5;
+        return std::vector<double>{sig / (2 * E) * (x * x + nu * y * y + nu * z * z),
+                                   - nu * sig / E * x * y,
+                                   - nu * sig / E * x * z};
     };
+
+//    auto g = [] (double x, double y, double z) {
+//        return std::vector<double>{0, 0, 0};
+//    };
 
     auto par = std::make_shared<ParamsLE>(ParamsLE{
             0.05 , // h,

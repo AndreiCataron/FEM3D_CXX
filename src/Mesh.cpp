@@ -1,6 +1,5 @@
 #include "../include/Mesh.hpp"
 #include <gmsh.h>
-#include "../include/utils.hpp"
 #include <iostream>
 
 Mesh::Mesh() {

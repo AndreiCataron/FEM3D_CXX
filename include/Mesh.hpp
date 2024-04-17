@@ -4,7 +4,6 @@
 #include <string>
 #include <memory>
 #include <set>
-#include </opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3/Eigen/Dense>
 #include "params.hpp"
 #include "utils.hpp"
 #include "MeshInfo.hpp"
@@ -30,6 +29,7 @@ public:
     friend class FEM3D;
     friend class FEM3DVector;
     friend class LinearElasticity3D;
+    friend class Algoritm;
 
     void getNodesCoordinates();
     static void cubeMesh(double, double, double, double);

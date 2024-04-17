@@ -2,7 +2,6 @@
 #include <iostream>
 #include <set>
 #include <gmsh.h>
-#include <eigen3/Eigen/IterativeLinearSolvers>
 #include <thread>
 #include <future>
 

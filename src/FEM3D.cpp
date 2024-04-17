@@ -1,8 +1,6 @@
 #include "../include/FEM3D.hpp"
 
 #include <gmsh.h>
-#include <eigen3/Eigen/Dense>
-#include <eigen3/Eigen/Sparse>
 
 typedef exprtk::symbol_table<double> symbol_table_t;
 typedef exprtk::expression<double>   expression_t;

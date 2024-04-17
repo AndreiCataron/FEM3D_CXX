@@ -1,9 +1,10 @@
 #include "../include/Algoritm.hpp"
 #include <iostream>
+#include <utility>
 
-Algoritm::Algoritm(std::shared_ptr<LinearElasticity3D> const& le) : LE(le) {}
+Algoritm::Algoritm(std::shared_ptr<LinearElasticity3D> const& le, std::string db) : LE(le), dirichletBuffer(std::move(db)) {}
 
-Algoritm::Algoritm(std::shared_ptr<LinearElasticity3D> const& le, std::vector<double>& plane) : LE(le), projectionPlane(plane) {}
+Algoritm::Algoritm(std::shared_ptr<LinearElasticity3D> const& le, std::vector<double>& plane, std::string db) :LE(le), projectionPlane(plane), dirichletBuffer(std::move(db)) {}
 
 void Algoritm::computeSolution() {
     LE -> computeStiffnessMatrixAndLoadVector();
@@ -30,8 +31,11 @@ void Algoritm::unaccessibleDirichletPrep() {
         nextStepDir[tag] = bc;
     }
 
+    nextStepDir.insert(buffer.cbegin(), buffer.cend());
+
     // swap Neumann and Dirichlet boundaries
     auto par = LE -> getParamsPointer();
+    par -> dirichlet_bc = initialNeumannBdry;
     par -> swapBC();
 
     // reset stresses and BC
@@ -72,6 +76,11 @@ void Algoritm::unaccessibleNeumannPrep() {
 
 void Algoritm::iteration(int k) {
     if (k == 0) {
+        auto par = LE -> getParamsPointer();
+        initialDirichletBdry = par -> dirichlet_bc;
+        par -> dirichlet_bc = par -> dirichlet_bc + " or " + dirichletBuffer;
+        std::cout << par -> dirichlet_bc << '\n' << par -> neumann_bc << '\n';
+
         // set exact Dirichlet BC Gamma_u and make Gamma_a Neumann boundary
         LE -> setBoundaryConditions();
         // get tags of nodes on Gamma_a
@@ -80,9 +89,23 @@ void Algoritm::iteration(int k) {
         LE -> computeIntegrationPointsStresses();
         initialStresses = LE -> getStresses();
         // get Dirichlet BC from Gamma_u and modify them to a random guess
+        // we don't want to modify the nodes in the buffer boundary
         auto dirichletBC = LE -> getDirichletBC();
+
+        std::cout << "DIR LEN: " << dirichletBC.size() << '\n';
+
+        auto msh = LE -> getMesh();
+        auto coordMap = msh -> global.node_coordinates;
         for (const auto& [tag, bc] : dirichletBC) {
-            dirichletBC[tag] = std::vector<double>{0.1, 0.1, 0.1};
+            auto coord = coordMap[tag];
+            //std::cout << std::get<0>(coord) << ' ' << std::get<1>(coord) << ' ' << std::get<2>(coord) << ' ' << LE -> checkNodeSatisfiesCustomEquation(dirichletBuffer, std::get<0>(coord), std::get<1>(coord), std::get<2>(coord)) <<'\n';
+            if (!LE -> checkNodeSatisfiesCustomEquation(dirichletBuffer, std::get<0>(coord), std::get<1>(coord), std::get<2>(coord))) {
+                dirichletBC[tag] = std::vector<double>{0.1, 0.1, 0.1};
+            }
+            else {
+                //std::cout << std::get<0>(coord) << ' ' << std::get<1>(coord) << ' ' << std::get<2>(coord) << '\n';
+                buffer[tag] = dirichletBC[tag];
+            }
         }
         // reset BC
         LE -> resetBoundaryConditions(false, true);
@@ -101,7 +124,10 @@ void Algoritm::iteration(int k) {
 
         // swap Neumann and Dirichlet boundaries
         auto par = LE -> getParamsPointer();
+        par -> dirichlet_bc = initialDirichletBdry;
+        initialNeumannBdry = par -> neumann_bc;
         par -> swapBC();
+        par -> dirichlet_bc = par -> dirichlet_bc + " or " + dirichletBuffer;
 
         // set exact Dirichlet BC on Gamma_a and make Gamma_u Neumann boundary
         LE -> setBoundaryConditions();

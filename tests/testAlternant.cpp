@@ -39,8 +39,9 @@ int main(int argc, char **argv) {
 //            "x == 0", // neumann BC
 //            "x == 0.5",
 //            "x < 0.5 and (y == 0 or y == 0.5 or z == 0 or z == 0.5 or x == 0)",
-            "x >= 0.25 and (y == 0 or y == 0.5 or z == 0 or z == 0.5 or x == 0.5)",
-            "x < 0.25 and (y == 0 or y == 0.5 or z == 0 or z == 0.5 or x == 0.5)",
+            "x > 0.3 and (y == 0 or y == 0.5 or z == 0 or z == 0.5 or x == 0.5)",
+            "x < 0.2 and (y == 0 or y == 0.5 or z == 0 or z == 0.5 or x == 0.5)",
+            // x >=0.2 and x <= 0.3 and (y == 0 or y == 0.5 or z == 0 or z == 0.5 or x == 0.5)
             3, // quadrature precision
             3, // triangle quadrature precision
             1, // order of lagrange polynomials
@@ -65,8 +66,10 @@ int main(int argc, char **argv) {
 
     auto fem = std::make_shared<LinearElasticity3D>(par, msh);
 
-    Algoritm alg(fem);
+    std::string buffer = "(x >=0.2 and x <= 0.3 and (y == 0 or y == 0.5 or z == 0 or z == 0.5 or x == 0.5))";
+    Algoritm alg(fem, buffer);
 
-    alg.iterations(3, 0, true);
+    //std::cout << fem -> checkNodeSatisfiesCustomEquation(buffer, 0.4, 0.3, 1);
+    alg.iterations(100, 0, true);
 
 }
