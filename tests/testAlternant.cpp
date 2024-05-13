@@ -1,6 +1,5 @@
 #include <iostream>
 #include "../include/LinearElasticity3D.hpp"
-#include </opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3/Eigen/Dense>
 #include <memory>
 #include <vector>
 #include "../include/Algoritm.hpp"
@@ -13,7 +12,7 @@ int main(int argc, char **argv) {
                                    - nu * sig / E * x * z};
     };
 
-    auto grad = [] (double x, double y, double z) {
+    auto grad = [] (double x, double y, double z) -> Eigen::Matrix3d{
         double nu = 0.33, E = 70.0, sig = 1.5;
         Eigen::Matrix3d grd;
         grd << x, nu * y, nu * z,
@@ -39,8 +38,8 @@ int main(int argc, char **argv) {
 //            "x == 0", // neumann BC
 //            "x == 0.5",
 //            "x < 0.5 and (y == 0 or y == 0.5 or z == 0 or z == 0.5 or x == 0)",
-            "x > 0.3 and (y == 0 or y == 0.5 or z == 0 or z == 0.5 or x == 0.5)",
-            "x < 0.2 and (y == 0 or y == 0.5 or z == 0 or z == 0.5 or x == 0.5)",
+            "(x > 0.35 and (y == 0 or y == 0.5 or z == 0 or z == 0.5 or x == 0.5))",
+            "(x < 0.15 and (y == 0 or y == 0.5 or z == 0 or z == 0.5 or x == 0.5))",
             // x >=0.2 and x <= 0.3 and (y == 0 or y == 0.5 or z == 0 or z == 0.5 or x == 0.5)
             3, // quadrature precision
             3, // triangle quadrature precision
@@ -66,10 +65,12 @@ int main(int argc, char **argv) {
 
     auto fem = std::make_shared<LinearElasticity3D>(par, msh);
 
-    std::string buffer = "(x >=0.2 and x <= 0.3 and (y == 0 or y == 0.5 or z == 0 or z == 0.5 or x == 0.5))";
+    std::cout << omp_get_num_threads() << "Threads \n";
+
+    std::string buffer = "(x >=0.15 and x <= 0.35 and (y == 0 or y == 0.5 or z == 0 or z == 0.5 or x == 0.5))";
     Algoritm alg(fem, buffer);
 
     //std::cout << fem -> checkNodeSatisfiesCustomEquation(buffer, 0.4, 0.3, 1);
-    alg.iterations(100, 0, true);
+    alg.iterations(150, 0, true);
 
 }

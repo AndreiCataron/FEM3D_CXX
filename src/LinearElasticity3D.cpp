@@ -29,7 +29,6 @@ void LinearElasticity3D::computeIntegrationPointsStresses() noexcept {
     integrationPointsStresses.reserve(mesh -> global.trianglesGlobalCoord.size() / 3);
     for (int i = 0; i < mesh -> global.trianglesGlobalCoord.size() / 3; i++) {
         Eigen::Matrix3d grd = paramsLE_ -> solution_gradient(mesh -> global.trianglesGlobalCoord[3 * i], mesh -> global.trianglesGlobalCoord[3 * i + 1], mesh -> global.trianglesGlobalCoord[3 * i + 2]);
-        if (i == 0) std::cout << grd << '\n';
         Eigen::Matrix3d strain = 0.5 * (grd + grd.transpose());
 
         // compute stress tensor
@@ -207,47 +206,51 @@ void LinearElasticity3D::computeStiffnessMatrixAndLoadVector() {
     stiffness_matrix.resize(3 * noNodes, 3 * noNodes);
 
     // assemble tripletList and load vector by looping through all elements and computing the element stiffness matrix and load vector
-    const int num_threads = 4;
+    const int num_threads = 1;
 
     //std::vector<std::jthread> threads;
     std::vector<std::thread> threads;
     int chunk_size = int(mesh -> elems.elementTags.size()) / num_threads;
 
-    for (int t = 0; t < num_threads; t++) {
-        int startIdx = t * chunk_size;
-        int endIdx = (t + 1) * chunk_size;
-        if (t == num_threads - 1) {
-            endIdx = int(mesh -> elems.elementTags.size());
-        }
+    stiffnessIterations(0, int(mesh -> elems.elementTags.size()));
 
-        threads.emplace_back([startIdx, endIdx, this]()
-                             {stiffnessIterations(startIdx, endIdx);} );
-    }
+//    for (int t = 0; t < num_threads; t++) {
+//        int startIdx = t * chunk_size;
+//        int endIdx = (t + 1) * chunk_size;
+//        if (t == num_threads - 1) {
+//            endIdx = int(mesh -> elems.elementTags.size());
+//        }
+//
+//        threads.emplace_back([startIdx, endIdx, this]()
+//                             {stiffnessIterations(startIdx, endIdx);} );
+//    }
+//
+//    // neumannIterations(0, int(mesh -> bdry.boundaryFacesTags.size()));
+//    // auto a = std::async(std::launch::async, [this](){neumannIterations(0, int(mesh -> bdry.boundaryFacesTags.size())); } );
+//
+//    for (auto &thread : threads) {
+//        thread.join();
+//    }
+//
+//    std::vector<std::thread> neuThreads;
+//    chunk_size = int(mesh -> bdry.boundaryFacesTags.size()) / num_threads;
 
-    //neumannIterations(0, int(mesh -> bdry.boundaryFacesTags.size()));
-    // auto a = std::async(std::launch::async, [this](){neumannIterations(0, int(mesh -> bdry.boundaryFacesTags.size())); } );
+    neumannIterations(0, int(mesh -> bdry.boundaryFacesTags.size()));
 
-    for (auto &thread : threads) {
-        thread.join();
-    }
-
-    std::vector<std::thread> neuThreads;
-    chunk_size = int(mesh -> bdry.boundaryFacesTags.size()) / num_threads;
-
-    for (int t = 0; t < num_threads; t++) {
-        int startIdx = t * chunk_size;
-        int endIdx = (t + 1) * chunk_size;
-        if (t == num_threads - 1) {
-            endIdx = int(mesh -> bdry.boundaryFacesTags.size());
-        }
-
-        neuThreads.emplace_back([startIdx, endIdx, this]()
-                             { neumannIterations(startIdx, endIdx);} );
-    }
-
-    for (auto &thread : neuThreads) {
-        thread.join();
-    }
+//    for (int t = 0; t < num_threads; t++) {
+//        int startIdx = t * chunk_size;
+//        int endIdx = (t + 1) * chunk_size;
+//        if (t == num_threads - 1) {
+//            endIdx = int(mesh -> bdry.boundaryFacesTags.size());
+//        }
+//
+//        neuThreads.emplace_back([startIdx, endIdx, this]()
+//                                 {neumannIterations(startIdx, endIdx);} );
+//    }
+//
+//    for (auto &thread : neuThreads) {
+//        thread.join();
+//    }
 
     std::cout << "IN LE STIFF: " << stiffness_matrix.rows() << ' ' << stiffness_matrix.cols() << ' ' << noNodes << " F: " << freeNodes.size() << " C: " << constrainedNodes.size() << " BF: " << bdryFreeNodes.size() << '\n';
     stiffness_matrix.setFromTriplets(tripletList.begin(), tripletList.end());

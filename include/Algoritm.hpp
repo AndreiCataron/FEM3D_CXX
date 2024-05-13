@@ -12,7 +12,7 @@ private:
     // corespunzatoare portiunii de frontiera Gamma_1 din Nachaoui
     std::string dirichletBuffer, initialDirichletBdry, initialNeumannBdry;
 
-    DirichletMap buffer;
+    DirichletMap buffer = {};
 
     std::vector<double> projectionPlane = {1, 0, 0, 0};
     DirichletMap initialDirichletCondition = {};
@@ -22,7 +22,8 @@ private:
     DirichletMap prevDirichletCondition = {};
 
     // relaxation factor
-    double theta = 1.5;
+    double theta = 1.7;
+    stressVector previousStresses = {};
 public:
     Algoritm(std::shared_ptr<LinearElasticity3D> const&, std::string);
     Algoritm(std::shared_ptr<LinearElasticity3D> const&, std::vector<double>&, std::string);
@@ -31,6 +32,7 @@ public:
     void iterations(int, double, bool);
 
 private:
+    void computeRelaxedStresses(stressVector&);
     void unaccessibleDirichletPrep();
     void unaccessibleNeumannPrep();
     void computeSolution();

@@ -30,13 +30,17 @@ void Algoritm::unaccessibleDirichletPrep() {
 
         nextStepDir[tag] = bc;
     }
+    std::cout << "NSD LEN: " << nextStepDir.size() << ' ' << buffer.size() << '\n';
 
     nextStepDir.insert(buffer.cbegin(), buffer.cend());
+
+    std::cout << "NSD LEN 2: " << nextStepDir.size() << '\n';
 
     // swap Neumann and Dirichlet boundaries
     auto par = LE -> getParamsPointer();
     par -> dirichlet_bc = initialNeumannBdry;
     par -> swapBC();
+    std::cout << par -> dirichlet_bc << '\n' << par -> neumann_bc << '\n';
 
     // reset stresses and BC
     LE -> resetBoundaryConditions(true, true);
@@ -58,6 +62,10 @@ void Algoritm::unaccessibleNeumannPrep() {
     // compute aproximated stresses from previous solution
     LE -> computeApproximateBoundaryGradients();
     LE -> computeApproximatedStresses();
+    auto stresses = LE -> getStresses();
+    computeRelaxedStresses(stresses);
+    LE -> setStresses(stresses);
+    previousStresses = stresses;
     // reset BC
     LE -> resetBoundaryConditions(false, true);
 
@@ -78,8 +86,9 @@ void Algoritm::iteration(int k) {
     if (k == 0) {
         auto par = LE -> getParamsPointer();
         initialDirichletBdry = par -> dirichlet_bc;
+        initialNeumannBdry = par -> neumann_bc;
         par -> dirichlet_bc = par -> dirichlet_bc + " or " + dirichletBuffer;
-        std::cout << par -> dirichlet_bc << '\n' << par -> neumann_bc << '\n';
+        //std::cout << par -> dirichlet_bc << '\n' << par -> neumann_bc << '\n';
 
         // set exact Dirichlet BC Gamma_u and make Gamma_a Neumann boundary
         LE -> setBoundaryConditions();
@@ -91,8 +100,6 @@ void Algoritm::iteration(int k) {
         // get Dirichlet BC from Gamma_u and modify them to a random guess
         // we don't want to modify the nodes in the buffer boundary
         auto dirichletBC = LE -> getDirichletBC();
-
-        std::cout << "DIR LEN: " << dirichletBC.size() << '\n';
 
         auto msh = LE -> getMesh();
         auto coordMap = msh -> global.node_coordinates;
@@ -109,7 +116,7 @@ void Algoritm::iteration(int k) {
         }
         // reset BC
         LE -> resetBoundaryConditions(false, true);
-        // set exact Neumann BC on Gamma_a and guessed Dirichlet BC on Gamma_u
+        // set exact Neumann BC on Gamma_a, guessed Dirichlet BC on Gamma_u and exact Dirichlet BC on buffer
         LE -> setBoundaryConditions(dirichletBC);
         LE -> setBdryFreeNodeTags(accesibleBdryTags);
     }
@@ -119,21 +126,22 @@ void Algoritm::iteration(int k) {
         // compute aproximated stresses from previous solution
         LE -> computeApproximateBoundaryGradients();
         LE -> computeApproximatedStresses();
+        previousStresses = LE -> getStresses();
         // reset BC
         LE -> resetBoundaryConditions(false, true);
 
         // swap Neumann and Dirichlet boundaries
         auto par = LE -> getParamsPointer();
         par -> dirichlet_bc = initialDirichletBdry;
-        initialNeumannBdry = par -> neumann_bc;
         par -> swapBC();
         par -> dirichlet_bc = par -> dirichlet_bc + " or " + dirichletBuffer;
+        std::cout << par -> dirichlet_bc << '\n' << par -> neumann_bc << '\n';
 
-        // set exact Dirichlet BC on Gamma_a and make Gamma_u Neumann boundary
+        // set exact Dirichlet BC on Gamma_a and buffer and make Gamma_u Neumann boundary
         LE -> setBoundaryConditions();
         // get tags of nodes on Gamma_u
         unaccessibleBdryTags = LE -> getBdryFreeNodeTags();
-        // get exact Dirichlet BC from Gamma_a
+        // get exact Dirichlet BC from Gamma_a and buffer
         initialDirichletCondition = LE -> getDirichletBC();
 
         // delete stiff, load, displacements
@@ -160,11 +168,17 @@ void Algoritm::iterations(int k, double tol, bool out) {
         auto stiff = LE -> getStiffnessMatrix();
         auto load = LE -> getLoadVector();
 
-        if (out) {
+        if (out && i % 1 == 0) {
             LE -> outputData("/Users/andrei/CLionProjects/FEM/outputs/out" + std::to_string(i) + ".txt", true, projectionPlane);
         }
         double l2 = LE -> getL2Error(), h1 = LE -> getH1Error();
         std::cout << "Iteration " << i << '\n' << "L2 error: " << l2 << '\n' << "H1 Error: " << h1 << '\n' << "Time: " <<
                   std::chrono::duration <double, std::milli> (diff).count() << " ms, Displacements: " << d.size() << ' ' << "; Stiff: " << stiff.rows() << ' '  << stiff.cols() << "; load: " << load.size() << '\n';
+    }
+}
+
+void Algoritm::computeRelaxedStresses(stressVector& newStresses) {
+    for (int i = 0; i < newStresses.size(); i++) {
+        newStresses[i] = theta * newStresses[i] + (1 - theta) * previousStresses[i];
     }
 }

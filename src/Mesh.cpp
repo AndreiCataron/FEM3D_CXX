@@ -125,14 +125,12 @@ void Mesh::findBoundaryAdjacentElements() {
     std::string functionSpaceType = "GradLagrange" + std::to_string(params -> element_order);
     int numOrient, numComp;
     gmsh::model::mesh::getBasisFunctions(elems.elementType, bdry.localCoordsinElements, functionSpaceType, numComp, bdry.gradientsAtTriangleIntPoints, numOrient);
-
-    std::cout << "HATZ: " << global.trianglesGlobalCoord.size() << ' ' << bdry.localCoordsinElements.size() << ' ' << bdry.gradientsAtTriangleIntPoints.size() << '\n';
 }
 
 void Mesh::initMesh() {
     if (params == nullptr) {
         gmsh::option::setNumber("Mesh.CharacteristicLengthMax", 0.1);
-        gmsh::option::setNumber("Mesh.MaxNumThreads3D", 10);
+        gmsh::option::setNumber("Mesh.MaxNumThreads3D", 1);
         gmsh::option::setNumber("General.Verbosity", 1);
 
         gmsh::model::mesh::generate(3);

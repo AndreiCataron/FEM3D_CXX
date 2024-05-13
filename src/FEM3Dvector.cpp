@@ -57,18 +57,21 @@ void FEM3DVector::outputData(const std::string& file, bool boundaryError, const 
     std::ofstream myFile;
     myFile.open(file, std::ios::out | std::ios::trunc);
 
+    // Line 1
     // output tag : index pairs
     for (const auto& [tag, idx] : nodeIndexes) {
         myFile << tag << ' ' << idx << ' ';
     }
     myFile << '\n';
 
+    // Line 2
     // output node coordinates as tag : coord1 coord2 coord3
     for (const auto& [tag, coord] : mesh -> global.node_coordinates) {
         myFile << tag << ' ' << std::get<0>(coord) << ' ' << std::get<1>(coord) << ' ' << std::get<2>(coord) << ' ';
     }
     myFile << '\n';
 
+    // Line 3
     // output displacements
 
     for (const auto& [tag, idx] : nodeIndexes) {
@@ -76,6 +79,7 @@ void FEM3DVector::outputData(const std::string& file, bool boundaryError, const 
     }
     myFile << '\n';
 
+    // Lines 4 and 5
     // neumann boundary error
     std::vector<std::size_t> boundaryNodesUnique = {};
     if (boundaryError) {

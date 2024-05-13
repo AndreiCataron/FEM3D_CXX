@@ -1039,3 +1039,12 @@
 //    doSomething(4);
 //}
 
+#include <iostream>
+
+int main() {
+    int s = 1;
+    for (int i = 0; i < 1000000; i++) {
+        s *= i;
+        std::cout << std::endl;
+    }
+}
