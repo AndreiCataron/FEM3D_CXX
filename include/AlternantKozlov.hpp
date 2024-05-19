@@ -1,11 +1,11 @@
-#ifndef FEM_ALGORITM_HPP
-#define FEM_ALGORITM_HPP
+#ifndef FEM_ALTERNANTKOZLOV_HPP
+#define FEM_ALTERNANTKOZLOV_HPP
 
 #include "FEM3D.hpp"
 #include "FEM3Dvector.hpp"
 #include "LinearElasticity3D.hpp"
 
-class Algoritm {
+class AlternantKozlov {
 private:
     std::shared_ptr<LinearElasticity3D> LE;
 
@@ -22,11 +22,11 @@ private:
     DirichletMap prevDirichletCondition = {};
 
     // relaxation factor
-    double theta = 1.7;
+    double theta = 1.5;
     stressVector previousStresses = {};
 public:
-    Algoritm(std::shared_ptr<LinearElasticity3D> const&, std::string);
-    Algoritm(std::shared_ptr<LinearElasticity3D> const&, std::vector<double>&, std::string);
+    AlternantKozlov(std::shared_ptr<LinearElasticity3D> const&, std::string);
+    AlternantKozlov(std::shared_ptr<LinearElasticity3D> const&, std::vector<double>&, std::string);
 
     void iteration(int);
     void iterations(int, double, bool);

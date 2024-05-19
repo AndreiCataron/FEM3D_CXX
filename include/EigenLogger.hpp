@@ -10,7 +10,7 @@ private:
     std::string file;
     std::ofstream myFile;
 public:
-    explicit EigenLogger(std::string  f) : file(std::move(f)) {}
+    explicit EigenLogger(std::string f) : file(std::move(f)) {}
 
     void outputSparseMatrixtoFile(const Eigen::SparseMatrix<double>&& m) {
         myFile.open(file, std::ios::out | std::ios::trunc);
@@ -33,6 +33,10 @@ public:
         }
 
         myFile.close();
+    }
+
+    void setFile(std::string f) {
+        file = std::move(f);
     }
 
 };

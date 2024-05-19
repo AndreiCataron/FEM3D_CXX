@@ -24,8 +24,8 @@ add_executable(ret randomEigenTests.cpp)
 add_executable(stiff test_stiffnessAndLoad.cpp ../include/FEM3D.hpp ../src/FEM3D.cpp ../include/FEM3Dvector.hpp ../src/FEM3Dvector.cpp ../include/LinearElasticity3D.hpp ../src/LinearElasticity3D.cpp ../include/utils.hpp ../src/utils.cpp ../include/Mesh.hpp ../src/Mesh.cpp ../include/params.hpp)
 add_executable(exam testExampleSolutions.cpp ../include/FEM3D.hpp ../src/FEM3D.cpp ../include/FEM3Dvector.hpp ../src/FEM3Dvector.cpp ../include/LinearElasticity3D.hpp ../src/LinearElasticity3D.cpp ../include/utils.hpp ../src/utils.cpp ../include/Mesh.hpp ../src/Mesh.cpp ../include/params.hpp)
 add_executable(util test_utils.cpp ../include/utils.hpp ../src/utils.cpp ../include/params.hpp)
-add_executable(examnonlin ../include/FEM3D.hpp ../src/FEM3D.cpp ../include/FEM3Dvector.hpp ../src/FEM3Dvector.cpp ../include/LinearElasticity3D.hpp ../src/LinearElasticity3D.cpp ../include/utils.hpp ../src/utils.cpp ../include/Mesh.hpp ../src/Mesh.cpp ../include/params.hpp ../include/Algoritm.hpp ../src/Algoritm.cpp testNonlinearSolution.cpp)
-add_executable(alter ../include/FEM3D.hpp ../src/FEM3D.cpp ../include/FEM3Dvector.hpp ../src/FEM3Dvector.cpp ../include/LinearElasticity3D.hpp ../src/LinearElasticity3D.cpp ../include/utils.hpp ../src/utils.cpp ../include/Mesh.hpp ../src/Mesh.cpp ../include/params.hpp ../include/Algoritm.hpp ../src/Algoritm.cpp testAlternant.cpp)
+add_executable(examnonlin ../include/FEM3D.hpp ../src/FEM3D.cpp ../include/FEM3Dvector.hpp ../src/FEM3Dvector.cpp ../include/LinearElasticity3D.hpp ../src/LinearElasticity3D.cpp ../include/utils.hpp ../src/utils.cpp ../include/Mesh.hpp ../src/Mesh.cpp ../include/params.hpp ../include/AlternantKozlov.hpp ../src/AlternantKozlov.cpp testNonlinearSolution.cpp)
+add_executable(alter ../include/FEM3D.hpp ../src/FEM3D.cpp ../include/FEM3Dvector.hpp ../src/FEM3Dvector.cpp ../include/LinearElasticity3D.hpp ../src/LinearElasticity3D.cpp ../include/utils.hpp ../src/utils.cpp ../include/Mesh.hpp ../src/Mesh.cpp ../include/params.hpp ../include/AlternantKozlov.hpp ../src/AlternantKozlov.cpp testAlternant.cpp)
 
 target_link_libraries(sbc LINK_PUBLIC "${FOO_LIB}")
 

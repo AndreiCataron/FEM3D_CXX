@@ -9,7 +9,7 @@ struct Params{
     // mesh size
     double h;
     // maximum number of threads for meshing
-    unsigned int max_num_threads = 10;
+    unsigned int max_num_threads = 1;
     // gmsh verbosity
     unsigned int verbosity = 1;
     // equation of boundary surfaces where Dirichlet BC are imposed

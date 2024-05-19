@@ -1,19 +1,20 @@
-#include "../include/Algoritm.hpp"
+#include "../include/AlternantKozlov.hpp"
+#include "../include/EigenLogger.hpp"
 #include <iostream>
 #include <utility>
 
-Algoritm::Algoritm(std::shared_ptr<LinearElasticity3D> const& le, std::string db) : LE(le), dirichletBuffer(std::move(db)) {}
+AlternantKozlov::AlternantKozlov(std::shared_ptr<LinearElasticity3D> const& le, std::string db) : LE(le), dirichletBuffer(std::move(db)) {}
 
-Algoritm::Algoritm(std::shared_ptr<LinearElasticity3D> const& le, std::vector<double>& plane, std::string db) :LE(le), projectionPlane(plane), dirichletBuffer(std::move(db)) {}
+AlternantKozlov::AlternantKozlov(std::shared_ptr<LinearElasticity3D> const& le, std::vector<double>& plane, std::string db) : LE(le), projectionPlane(plane), dirichletBuffer(std::move(db)) {}
 
-void Algoritm::computeSolution() {
+void AlternantKozlov::computeSolution() {
     LE -> computeStiffnessMatrixAndLoadVector();
     LE -> solveDirectProblem();
     LE -> computeL2Error();
     LE -> computeH1Error();
 }
 
-void Algoritm::unaccessibleDirichletPrep() {
+void AlternantKozlov::unaccessibleDirichletPrep() {
     auto displacements = LE -> getDisplacements();
     auto freeBdryTags = LE -> getBdryFreeNodeTags();
     auto constrainedIdxs = LE -> getConstrainedNodes();
@@ -56,7 +57,7 @@ void Algoritm::unaccessibleDirichletPrep() {
 }
 
 
-void Algoritm::unaccessibleNeumannPrep() {
+void AlternantKozlov::unaccessibleNeumannPrep() {
     // reset stresses
     LE -> resetBoundaryConditions(true, false);
     // compute aproximated stresses from previous solution
@@ -82,13 +83,12 @@ void Algoritm::unaccessibleNeumannPrep() {
     LE -> resetFEMData();
 }
 
-void Algoritm::iteration(int k) {
+void AlternantKozlov::iteration(int k) {
     if (k == 0) {
         auto par = LE -> getParamsPointer();
         initialDirichletBdry = par -> dirichlet_bc;
         initialNeumannBdry = par -> neumann_bc;
         par -> dirichlet_bc = par -> dirichlet_bc + " or " + dirichletBuffer;
-        //std::cout << par -> dirichlet_bc << '\n' << par -> neumann_bc << '\n';
 
         // set exact Dirichlet BC Gamma_u and make Gamma_a Neumann boundary
         LE -> setBoundaryConditions();
@@ -105,12 +105,11 @@ void Algoritm::iteration(int k) {
         auto coordMap = msh -> global.node_coordinates;
         for (const auto& [tag, bc] : dirichletBC) {
             auto coord = coordMap[tag];
-            //std::cout << std::get<0>(coord) << ' ' << std::get<1>(coord) << ' ' << std::get<2>(coord) << ' ' << LE -> checkNodeSatisfiesCustomEquation(dirichletBuffer, std::get<0>(coord), std::get<1>(coord), std::get<2>(coord)) <<'\n';
+
             if (!LE -> checkNodeSatisfiesCustomEquation(dirichletBuffer, std::get<0>(coord), std::get<1>(coord), std::get<2>(coord))) {
-                dirichletBC[tag] = std::vector<double>{0.1, 0.1, 0.1};
+                dirichletBC[tag] = std::vector<double>{0.0001, 0.0001, 0.0001};
             }
             else {
-                //std::cout << std::get<0>(coord) << ' ' << std::get<1>(coord) << ' ' << std::get<2>(coord) << '\n';
                 buffer[tag] = dirichletBC[tag];
             }
         }
@@ -155,9 +154,17 @@ void Algoritm::iteration(int k) {
     }
 
     computeSolution();
+
+    if (k == 2) {
+        EigenLogger log("/Users/andrei/CLionProjects/FEM/outputs/alter_stiffness.txt");
+        log.outputSparseMatrixtoFile(LE -> getStiffnessMatrix());
+
+        log.setFile("/Users/andrei/CLionProjects/FEM/outputs/alter_load.txt");
+        log.outputVectortoFile(LE -> getLoadVector());
+    }
 }
 
-void Algoritm::iterations(int k, double tol, bool out) {
+void AlternantKozlov::iterations(int k, double tol, bool out) {
     for (int i = 0; i < k; i++) {
         auto start = std::chrono::steady_clock::now();
         iteration(i);
@@ -177,7 +184,7 @@ void Algoritm::iterations(int k, double tol, bool out) {
     }
 }
 
-void Algoritm::computeRelaxedStresses(stressVector& newStresses) {
+void AlternantKozlov::computeRelaxedStresses(stressVector& newStresses) {
     for (int i = 0; i < newStresses.size(); i++) {
         newStresses[i] = theta * newStresses[i] + (1 - theta) * previousStresses[i];
     }

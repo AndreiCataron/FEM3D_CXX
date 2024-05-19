@@ -29,7 +29,7 @@ public:
     friend class FEM3D;
     friend class FEM3DVector;
     friend class LinearElasticity3D;
-    friend class Algoritm;
+    friend class AlternantKozlov;
 
     void getNodesCoordinates();
     static void cubeMesh(double, double, double, double);
